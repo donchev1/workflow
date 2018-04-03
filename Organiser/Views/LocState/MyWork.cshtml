@@ -1,0 +1,114 @@
+@model OrderStateViewModel
+
+@{
+    ViewData["Title"] = Model.LocationName;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br /><br />
+
+<h1>@Model.LocationName</h1>
+
+@if (Model.OrderList != null && Model.OrderList.Count > 0)
+{
+    <h2> Orders Currently Processing</h2>
+
+    <br /><br />
+    <div class="text-align-center">
+        <a asp-action="Index"
+           asp-controller="Messages"
+           asp-route-id="@(Model.LocationNameNum)"
+           class="btn btn-primary" style="width:auto">
+            <div>Messages &nbsp;<div class="pointer newMessages">&#9993;</div></div>
+        </a>
+    </div>
+    <br />
+    <table class="ordersTable centralised trHighlightOnHover">
+        <tr>
+            <th>Order Number</th>
+            <th>Entity Type</th>
+            <th>Entity Count</th>
+            <th>Ready For Collection</th>
+            <th>Entities in Progress</th>
+            <th>Mark Entities Ready</th>
+        </tr>
+        @foreach (var order in Model.OrderList)
+        {
+            <tr class="orders">
+                <td>@order.OrderNumber</td>
+                <td>@order.EntityType</td>
+                <td>@order.EntityCount</td>
+                <td>@order.LocStates[0].EntitiesReadyForCollection</td>
+                <td id="entitiesInProgress_@order.OrderId">@order.LocStates[0].EntitiesInProgress</td>
+                <td>
+                    <input id="entitiesReady_@order.OrderId" min="1" max="@order.LocStates[0].EntitiesInProgress" type="number" size="5" />
+                </td>
+                <td>
+                    <input class="btn btn-primary" type="button" value="Mark as Ready" onclick="markAsReady('@order.LocStates[0].Name', '@order.OrderId', '@order.LocStates[0].EntitiesInProgress', '@order.LocStates[0].LocStateId')" />
+
+                </td>
+                <td>
+                        <a class="btn btn-primary" href="/order/Details/@order.OrderId">Details</a>
+                </td>
+            </tr>
+        }
+    </table>
+
+}
+else
+{
+
+    <div class="text-align-center">
+        <p> No orders are currently being processed here.</p>
+        <p> Check the order list for more work.</p>
+        <a asp-action="Index"
+           asp-controller="Messages"
+           asp-route-id="@(Model.LocationNameNum)"
+           class="btn btn-primary" style="width:auto">
+            <div>Messages &nbsp;<div class="pointer newMessages">&#9993;</div></div>
+        </a>
+    </div>
+}
+
+<script>
+     setInterval(function () {
+        $.ajax({
+        type: "POST",
+        url: basicUrl + "Messages/CheckForNewMessages?locStateId=@Model.LocationNameNum",
+        success: function (result) {
+            if (result) {
+                var newMessagesIcon = $("div[class$='newMessages']");
+                newMessagesIcon.css('display', 'inline-block');
+            }
+        }
+    });
+    }, 10000);
+
+    function markAsReady(locStateName, orderId, entitiesInProgress, locStateId) {
+        entitiesPassed = parseInt($("#entitiesReady_" + orderId).val());
+
+        if (isNaN(entitiesPassed) || entitiesPassed === "" || entitiesPassed < 1) {
+            alert("Please select valid number!");
+            return false;
+        }
+
+        if (entitiesPassed > parseInt(entitiesInProgress)) {
+            alert("The maximum amount of entities you can pick up is " + entitiesInProgress);
+            return false;
+        }
+
+        var model = "LocStateId=" + locStateId + "&EntitiesPassed=" + entitiesPassed;
+
+         $.ajax({
+            type: "POST",
+            url: basicUrl + "LocState/MarkAsReady",
+            data: model,
+            success: function (result) {
+                window.location = basicUrl + "LocState/MyWork?locStateId=" + @Model.LocationNameNum + "&errorType=" + result["MessageType"] + "&message=" + result["Message"];
+            }
+        });
+
+    }
+
+</script>
+

@@ -1,0 +1,17 @@
+@model User
+
+@{
+    ViewData["Title"] = "Delete User";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br /><br />
+
+<h3>
+    Are you sure you want to delete @Model.UserName ?
+</h3><br />
+     <div class="text-align-center">
+         @Html.ActionLink("Yes", "DeleteConfirmed", "Account", new { id = Model.UserId }, new { @class = "btn btn-danger centralised" })
+         @Html.ActionLink("No", "Index", "Account",null, new { @class = "btn btn-primary centralised" })
+
+     </div>

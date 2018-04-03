@@ -1,0 +1,84 @@
+﻿@model MessagesViewModel
+
+@{
+    ViewData["Title"] = @Model.LocationName + " Message List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br /><br />
+<h2>@Model.LocationName Department</h2>
+<h3> Messages</h3>
+<br />
+<div id="newMessagesButton" class="text-align-center">
+    <a asp-action="Index"
+       asp-controller="Messages"
+       asp-route-id="@(Model.LocationNameNum)"
+       class="btn btn-primary" style="width:auto">
+        <div>You have new messsages &nbsp;<div class="messagesIcon">&#9993;</div></div>
+    </a>
+</div>
+<br />
+
+@foreach (Note n in Model.Notes)
+{
+    <div class="messageBox" style="display: block;">
+        <div class="author"><p>@n.Author</p></div>
+        <div class="messageContent">
+            <p class="noteContent">@n.Content</p>
+        </div>
+        <div>
+            <p class="timeStamp">@n.CreatedAt.ToString("HH:mm-dd/MM/yy")</p>
+        </div>
+    </div>
+
+}
+<br />
+
+@{
+    var prevDisabled = !Model.Notes.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.Notes.HasNextPage ? "disabled" : "";
+}
+<div class="text-align-center">
+    <a asp-action="Index"
+       asp-route-id="@(Model.LocationNameNum)"
+       asp-route-page="@(Model.Notes.PageIndex - 1)"
+       class="btn btn-default @prevDisabled">
+        Previous
+    </a>
+    <a asp-action="Index"
+       asp-route-id="@(Model.LocationNameNum)"
+       asp-route-page="@(Model.Notes.PageIndex + 1)"
+       class="btn btn-default @nextDisabled">
+        Next
+    </a>
+</div>
+
+<br />
+
+@if(Model.userIsAdmin)
+{ 
+<form  asp-controller="Messages" asp-action="EraseMessages" method="post">
+    <div class="text-align-center centralised">
+        <p class="bold"> Delete messages older than: </p>
+
+        <input name="locationNameNum" type="number" class="hidden centralised" value="@Model.LocationNameNum" />
+        <input class=" centralised" type="date" name="eraseTo" />
+        <input class="btn btn-danger centralised" type="submit" value="Delete" />
+    </div>
+</form>
+}
+
+
+<script>
+    setInterval(function () {
+        $.ajax({
+        type: "POST",
+        url: basicUrl + "Messages/CheckForNewMessages?locStateId=@Model.LocationNameNum",
+        success: function (result) {
+            if (result) {
+                var newMessagesIcon = $("#newMessagesButton");
+                newMessagesIcon.css('display', 'block');
+            }
+        }
+    });
+    }, 10000);
+</script>

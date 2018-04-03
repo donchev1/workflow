@@ -1,0 +1,73 @@
+@model OrderStateViewModel
+
+
+@{
+    ViewData["Title"] = "Order List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br /><br />
+<h2>Order List</h2>
+<br />
+<hr />
+<div class="text-align-center">
+    @if (User.IsInRole("Orders"))
+    {
+        <p class="button">
+            <a class="btn btn-primary" href="/order/Create">Create New Order</a>
+        </p>
+    }
+    <br />
+
+    <form asp-controller="Order" asp-action="Index" method="get">
+        <p>
+            Order Number: <input type="text" name="SearchID" />
+            <input type="submit" value="Filter" class="btn btn-primary" />
+        </p>
+    </form>
+</div>
+<table class="ordersTable centralised trHighlightOnHover">
+    <tr>
+        <th>Order Number</th>
+        <th>Entity Type</th>
+        <th>Entity Count</th>
+        <th>Status</th>
+    </tr>
+    @foreach (var order in Model.OrderListPaginated)
+    {
+        <tr class="orders">
+            <td>@order.OrderNumber</td>
+            <td>@order.EntityType</td>
+            <td>@order.EntityCount</td>
+            <td>@order.Status</td>
+            <td>
+                <a class="btn btn-primary" href="/order/Details/@order.OrderId">Details</a>
+                @if (User.IsInRole("Orders"))
+                {
+                    string twoLines = "  ||  ";
+                    @twoLines<a class="btn btn-primary" href="order/Edit/@order.OrderId">Edit</a> @twoLines
+                    <a class="btn btn-danger" href="order/Delete/@order.OrderId">Delete</a>
+                }
+            </td>
+        </tr>
+    }
+</table>
+<br />
+@{
+    var prevDisabled = !Model.OrderListPaginated.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.OrderListPaginated.HasNextPage ? "disabled" : "";
+}
+<div class="text-align-center">
+
+    <a asp-action="Index"
+       asp-route-page="@(Model.OrderListPaginated.PageIndex - 1)"
+       class="btn btn-default @prevDisabled">
+        Previous
+    </a>
+    <a asp-action="Index"
+       asp-route-page="@(Model.OrderListPaginated.PageIndex + 1)"
+       class="btn btn-default @nextDisabled">
+        Next
+    </a>
+
+</div>

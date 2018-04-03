@@ -1,0 +1,76 @@
+﻿@model Organiser.ViewModels.UsersViewModel
+
+@{
+    ViewData["Title"] = "User List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br /><br />
+<h2>User List</h2>
+<br />
+<p class="successMessage">
+    @TempData["success"]
+</p>
+<p class="errorMessage">
+    @ViewBag.Wrong
+</p>
+<div class="text-align-center">
+    <a class="btn btn-primary" asp-action="Create">Create New</a>
+</div>
+<hr />
+<table class="centralised tableCellRightBorder trHighlightOnHover">
+    <tr>
+        <th>User name</th>
+        <th>Password</th>
+        <th>Admin?</th>
+        <th>Role List</th>
+    </tr>
+    @{
+        int count = 0;
+    }
+    @foreach (var user in Model.Users)
+    {
+        count++;
+        string twoLines = "  ||  ";
+
+        <tr>
+            <td>@user.UserName</td>
+            <td class="passwordCell" id="@count">
+                <input type="password" disabled value="@user.Password" id="pass_@count" onclick="myFunction(@count)">
+                <input type="checkbox" onclick="myFunction(@count)">
+            </td>
+            <td>
+                @if (user.IsAdmin)
+                {
+                    <p>Yes</p>
+                }
+                else
+                {
+                    <p>No</p>
+                }
+            </td>
+            <td>
+                <select style="width:130px;" class="form-control" asp-items='@user.UserRolesDropdown'></select>
+            </td>
+            <td>
+                <a class="btn btn-primary" asp-action="Edit" asp-route-id="@user.UserId">Edit</a>
+                @if (user.UserName != User.Identity.Name)
+                {
+                @twoLines
+                    <a class="btn btn-danger" asp-action="Delete" asp-route-id="@user.UserId">Delete</a>
+                }
+            </td>
+        </tr>
+    }
+</table>
+
+
+<script>
+    function myFunction(count) {
+        var x = document.getElementById("pass_" + count);
+        if (x.type === "password") {
+            x.type = "text";
+        } else {
+            x.type = "password";
+        }
+    }
+</script>

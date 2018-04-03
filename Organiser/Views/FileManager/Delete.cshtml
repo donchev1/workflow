@@ -1,0 +1,12 @@
+﻿@model Tuple<int, string>
+@{
+    ViewData["Title"] = "Delete File";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br /><br />
+<h2>Are you sure you want to delete file: @Model.Item2</h2>
+<br /><hr />
+<div class="text-align-center">
+    <a class="btn btn-danger" href="/FileManager/DeleteConfirmed?orderId=@Model.Item1&fileName=@Model.Item2">Yes</a>
+    <a class="btn btn-primary" href="/order/Details/@Model.Item1">No</a>
+</div>  

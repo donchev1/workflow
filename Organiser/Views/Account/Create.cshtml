@@ -1,0 +1,52 @@
+﻿@model UsersCreateUpdateViewModel
+
+@{
+    ViewData["Title"] = "Create User";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br /><br />
+
+
+<h2>Create User</h2>
+<hr />
+<div class="text-align-center">
+    <form asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger centralised"></div>
+        <div class="form-group">
+            <label asp-for="UserName" class="control-label centralised"></label>
+            <input asp-for="UserName" class="form-control centralised" />
+            <span asp-validation-for="UserName" class="text-danger centralised"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Password" class="control-label centralised"></label>
+            <input asp-for="Password" class="form-control centralised" />
+            <span asp-validation-for="Password" class="text-danger centralised"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="ConfirmPassword" class="control-label centralised"></label>
+            <input asp-for="ConfirmPassword" class="form-control centralised"/>
+            <span asp-validation-for="ConfirmPassword" class="text-danger centralised"></span>
+        </div>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input asp-for="IsAdmin" /> @Html.DisplayNameFor(model => model.IsAdmin)
+                </label>
+            </div>
+        </div>
+        <h4>Roles</h4><br />
+            @{ int counter = 0;
+                string locname; }
+            @foreach (List<SelectListItem> roleDropDown in Model.RoleDropDowns)
+            {
+                locname = "Role" + counter.ToString();
+                <select name="@locname" class="form-control centralised" asp-items='@roleDropDown'></select>
+                counter++;
+            }
+        <br />
+        <div class="form-group text-align-center">
+            <input type="submit" value="Create" class="btn btn-primary" />
+        </div>
+    </form>
+</div>
+

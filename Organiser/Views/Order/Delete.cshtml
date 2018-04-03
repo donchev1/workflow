@@ -1,0 +1,33 @@
+@model OrderStateViewModel
+
+@{
+    ViewData["Title"] = "Delete Order";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br /><br />
+
+<h2>
+
+    Delete Order (@Model.OrderDetails.OrderNumber)
+</h2><br />
+
+<table class="centralised">
+    <tr>
+        <th>Order Number</th>
+        <th>Entity Type</th>
+        <th>Entity Count</th>
+        <th>Status</th>
+    </tr>
+    <tr>
+        <td>@Model.OrderDetails.OrderNumber</td>
+        <td>@Model.OrderDetails.EntityType</td>
+        <td>@Model.OrderDetails.EntityCount</td>
+        <td>@Model.OrderDetails.Status</td>
+    </tr>
+
+</table>
+<br />
+<div class="text-align-center">
+    @Html.ActionLink("Confirm", "DeleteConfirmed", "Order", new { id = Model.OrderDetails.OrderId }, new { @class = "btn btn-danger" })
+</div>

@@ -1,0 +1,229 @@
+@model OrderStateViewModel
+
+
+@{
+    ViewData["Title"] = "Order Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<br />
+
+<h2>Order Details</h2>
+
+
+
+<hr />
+<table class="centralised tableCellRightBorder ordersTable">
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.OrderNumber)</td>
+        <td>@Html.DisplayFor(model => model.OrderDetails.OrderNumber)</td>
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.EntityType)</td>
+        <td>@Html.DisplayFor(model => model.OrderDetails.EntityType)</td>
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.EntityCount)</td>
+        <td>@Html.DisplayFor(model => model.OrderDetails.EntityCount)</td>
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.Status)</td>
+        <td>@Html.DisplayFor(model => model.OrderDetails.Status)</td>
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.CreatedAt)</td>
+        <td>@Model.OrderDetails.CreatedAt.ToString("dd/MM/yy  (HH:mm)")</td>
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.StartedAt)</td>
+        @if (Model.OrderDetails.StartedAt == DateTime.MinValue)
+        {
+            <td>N/a</td>
+        }
+        else
+        {
+            <td>@Model.OrderDetails.StartedAt.ToString("dd/MM/yy (HH:mm)")</td>
+        }
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.FinshedAt)</td>
+        @if (Model.OrderDetails.FinshedAt == DateTime.MinValue)
+        {
+            <td>N/a</td>
+        }
+        else
+        {
+            <td>@Model.OrderDetails.FinshedAt.ToString("dd/MM/yy (HH:mm)")</td>
+        }
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.EntitiesNotProcessed)</td>
+        <td> @Html.DisplayFor(model => model.OrderDetails.EntitiesNotProcessed)</td>
+    </tr>
+</table>
+<br />
+@if (User.IsInRole("Orders"))
+{
+    <div class="text-align-center">
+        <a asp-action="Edit" class="btn btn-primary centralised" asp-route-id="@Model.OrderDetails.OrderId">Edit Order Details</a> <br />
+    </div>
+}
+<hr />
+<h2>Department Line</h2>
+<hr />
+
+<table class="ordersTable centralised">
+    <tr>
+        <th>
+            @Model.OrderDetails.EntityType ready for processing:
+        </th>
+        <td>@Model.OrderDetails.EntitiesNotProcessed</td>
+        <td></td>
+        @if (Model.AllowedPositions.Count() > 0 && Model.AllowedPositions.Contains(0) && Model.OrderDetails.EntitiesNotProcessed > 0)
+        {
+            <form asp-action="FirstPickUp">
+                <td>
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <input name="OrderId" type="text" style="display: none;" value="@Model.OrderDetails.OrderId" />
+                </td>
+
+                <td>
+                    <input id="EntitiesPassedInput" asp-for="EntitiesPassed" class="form-control pickUpInputBox inline-block" />
+                    <input class="inline-block btn btn-primary" id="firstPickUpButton" type="submit" value="Pick Up" />
+                    <span asp-validation-for="EntitiesPassed" class="text-danger"></span>
+                </td>
+            </form>
+        }
+    </tr>
+    <tr>
+        <th>Department</th>
+        <th>Status</th>
+        <th>Processing</th>
+        <th>Finished</th>
+    </tr>
+    @foreach (LocState ls in Model.OrderDetails.LocStates)
+    {
+        <tr>
+            <td>@ls.Name</td>
+            <td id="Status_@ls.LocStateId">@ls.Status</td>
+            <td id="InProgress_@ls.LocStateId" class="InProgress">@ls.EntitiesInProgress</td>
+            <td id="RFC_@ls.LocStateId" class="RFC">@ls.EntitiesReadyForCollection</td>
+            @if (Model.AllowedPositions.Count() > 0 && Model.AllowedPositions.Contains(ls.LocationPosition) && ls.EntitiesReadyForCollection > 0)
+            {
+                <td>
+                    <div class="form-firstPickUp">
+                        <input class="form-control pickUpInputBox" min="1" max="@ls.EntitiesReadyForCollection" id="entityCount_@ls.LocStateId" type="number" size="5" />
+                    </div>
+                    <div class="form-firstPickUp">
+                        <input class="btn btn-primary" type="button" value="Pick Up" onclick="pickUp('@ls.LocStateId', '@ls.Name')" />
+                    </div>
+                </td>
+            }
+        </tr>
+    }
+</table>
+<br />
+<hr />
+<h3>Related Files</h3>
+<hr />
+
+@if (Model.FileNamesUrls != null)
+{
+    <table class="centralised">
+        @foreach (KeyValuePair<string, string> entry in Model.FileNamesUrls)
+        {
+            <tr>
+                <td>@entry.Key</td>
+                <td>
+                    <a href="~/FileManager/Download?orderId=@Model.OrderDetails.OrderId&fileName=@entry.Key">Download</a>
+                </td>
+                <td>
+                    <a href=@Url.Content(entry.Value) target="_blank">Open</a><br />
+                </td>
+                @if (User.IsInRole("Orders"))
+                {
+
+                    <td>
+                        <a href="~/FileManager/Delete?orderId=@Model.OrderDetails.OrderId&fileName=@entry.Key">Delete</a><br />
+                    </td>
+                }
+            </tr>
+        }
+
+    </table>
+}
+else
+{
+    <div class="text-align-center">
+        <p>No files uploaded</p>
+    </div>
+}
+<hr />
+@if (User.IsInRole("Orders"))
+{
+    <h3>Upload new files</h3>
+    <hr />
+    <div class="text-align-center">
+        <form asp-action="UploadFile" asp-controller="FileManager" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <input type="hidden" asp-for="@Model.OrderDetails.OrderId" />
+                <label class="control-label">Add file</label><br />
+                @*<img src="@ViewBag.ImgPath" height="100" width="100" /><br />*@
+                @*@if (!string.IsNullOrEmpty(ViewBag.FileName))
+                    {
+                        <a href="~/Orders/Download?img=@ViewBag.FileName&userId=@Model.OrderId">Download</a><br />
+                    }*@
+                <input class="btn btn-default centralised" type="file" name="order_file" id="order_file" />
+
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Upload" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+
+}
+
+<script>
+
+    function pickUp(sourceLocStateId, locStateName) {
+        var locStateEntitiesRFC = $("td#RFC_" + sourceLocStateId).text().match(/\d+/);
+
+        var entitiesPassed = $("input#entityCount_" + sourceLocStateId).val();
+        if (entitiesPassed === "" || entitiesPassed < 1) {
+            alert("Please select valid number!");
+            return false;
+        }
+
+        var entitiesRFC = parseInt(locStateEntitiesRFC[0])
+        if (parseInt(entitiesPassed) > entitiesRFC) {
+            alert("The maximum amount of entities you can pick up is " + locStateEntitiesRFC);
+            return false;
+        }
+
+        var confirmation = confirm("Are you sure you want to move " + entitiesPassed + " entities from " + locStateName + " to the next department in the line.");
+        if (confirmation === false) {
+            return false;
+        }
+
+        var model = "LocStateId=" + sourceLocStateId + "&EntitiesPassed=" + entitiesPassed;
+        $.ajax({
+            type: "POST",
+            url: basicUrl + "order/PassEntities",
+            data: model,
+            success: function (resultModel) {
+                debugger;
+                $("input#entityCount_" + sourceLocStateId).val("");
+                $("td#RFC_" + sourceLocStateId).html(resultModel.sourceEntitiesReadyForCollection);
+                $("td#InProgress_" + resultModel.targetLocStateId).html(resultModel.targetEntitiesInProgress);
+                $("td#Status_" + resultModel.targetLocStateId).html(resultModel.targetLocStateStatus);
+            }
+        });
+
+    }
+
+</script>
+
+
+
+

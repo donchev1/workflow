@@ -1,0 +1,66 @@
+@model Organiser.Models.Order
+
+@{
+    ViewData["Title"] = "Order Edit";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br /><br />
+<h2>Edit Order</h2>
+
+<form asp-action="Edit">
+    <h4>Order</h4>
+    <hr />
+    <table class="centralised tableNoBottomBorder">
+        <tr>
+            <td>
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <input type="hidden" asp-for="OrderId" />
+                <label asp-for="OrderNumber"></label>
+            </td>
+            <td>
+                <div class="form-group">
+                    <div class="col-md-10">
+                        <input asp-for="OrderNumber" class="form-control" />
+                        <span asp-validation-for="OrderNumber" class="text-danger"></span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td><label asp-for="EntityType"></label></td>
+            <td>
+                <div class="form-group">
+                    <div class="col-md-10">
+                        <input asp-for="EntityType" class="form-control" />
+                        <span asp-validation-for="EntityType" class="text-danger"></span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <label asp-for="Status"></label>
+            </td>
+            <td>
+                <div class="form-group">
+                    <div class="col-md-10">
+                        <select asp-for="Status" class="form-control"
+                                asp-items='@Model.StatusDefaultsDropdown'></select>
+                    </div>
+                </div>
+            </td>
+        </tr>
+
+
+    </table>
+    <div class="text-align-center">
+        <input type="submit" value="Save" class="btn btn-primary" />
+    </div>
+</form>
+
+        
+   
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

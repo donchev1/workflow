@@ -1,0 +1,82 @@
+﻿@model LogsViewModel
+
+@{
+    ViewData["Title"] = "Log List";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<br /><br />
+<h2>Log</h2>
+<br />
+
+
+<br />
+<div class="text-align-center">
+    <form class="inline-block" asp-controller="Log" asp-action="Index" method="get">
+        <p>
+            Order Number: <input type="text" name="orderNumber" />
+            <input type="submit" value="Filter" />
+        </p>
+    </form>
+
+    <form class="inline-block" asp-controller="Log" asp-action="Index" method="get">
+        <p>
+            User Name: <input type="text" name="userName" />
+            <input type="submit" value="Filter" />
+        </p>
+    </form>
+</div>
+<br />
+<table  class="tableCellRightBorder centralised trHighlightOnHover">
+    <tr>
+        <th>
+            User
+        </th>
+        <th>
+            Order Number
+        </th>
+        <th colspan="6">
+            Content
+        </th>
+        <th>
+            Timestamp
+        </th>
+    </tr>
+    @foreach (Log log in Model.Logs)
+    {
+        <tr>
+            <td>@log.UserName</td>
+            <td>
+                @log.OrderNumber
+            </td>
+            <td colspan="6">@log.ActionRecord</td>
+            <th>@log.CreatedAt.ToString("dd/MM/yy HH:mm")</th>
+        </tr>
+    }
+</table>
+<br />
+
+<br />
+@{
+    var prevDisabled = !Model.Logs.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.Logs.HasNextPage ? "disabled" : "";
+}
+<div class="text-align-center">
+
+    <a asp-action="Index"
+       asp-route-page="@(Model.Logs.PageIndex - 1)"
+       class="btn btn-default @prevDisabled">
+        Previous
+    </a>
+    <a asp-action="Index"
+       asp-route-page="@(Model.Logs.PageIndex + 1)"
+       class="btn btn-default @nextDisabled">
+        Next
+    </a><br /><br />
+
+    <form class="inline-block" asp-controller="Log" asp-action="EraseLogs" method="post">
+        <p>
+            <input type="date" name="eraseTo" />
+            <input class="btn btn-danger" type="submit" value="Erase" />
+        </p>
+    </form>
+    </div>

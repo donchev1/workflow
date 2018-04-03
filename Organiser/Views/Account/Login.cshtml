@@ -1,0 +1,47 @@
+﻿@model Organiser.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<p class="errorMessage">
+    @ViewBag.Wrong
+</p>
+
+<link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+<div class="row container">
+    <div class="col-md-4"></div>
+    <div class="col-md-4">
+        <div id="login-box">
+            <h3>Welcome</h3>
+            <h4>Please Sign In</h4>
+            <div class="text-align-center">
+                <form asp-action="Login">
+                    <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger centralised"></div>
+                    <div class="form-group">
+                        <label asp-for="UserName" class="control-label centralised">User Name</label>
+                        <input asp-for="UserName" class="form-control centralised" />
+                        <span asp-validation-for="UserName" class="text-danger centralised"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Password" class="control-label centralised">Password</label>
+                        <input asp-for="Password" type="password" class="form-control centralised" />
+                        <span asp-validation-for="Password" class="text-danger centralised"></span>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label>
+                                <input asp-for="RememberMe" /> @Html.DisplayNameFor(model => model.RememberMe)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Sign In" class="btn btn-primary btn-block centralised" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4"></div>
+</div>
