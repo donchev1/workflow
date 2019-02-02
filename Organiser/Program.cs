@@ -18,17 +18,5 @@ namespace AspNetCoreDotNetCore2App
            WebHost.CreateDefaultBuilder(args)
           .UseStartup<Startup>()
           .Build();
-
-
-        //public static IWebHost BuildWebHost(string[] args) =>
-        //  WebHost.CreateDefaultBuilder(args)
-        // .UseStartup<Startup>()
-        // //.ConfigureAppConfiguration((hostContext, config) =>
-        // //{
-        // //  // delete all default configuration providers
-        // //  config.Sources.Clear();
-        // //    config.AddJsonFile("myconfig.json", optional: true);
-        // //})
-        // .Build();
     }
 }

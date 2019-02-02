@@ -8,13 +8,13 @@ namespace Organiser.Models
     public class NewMessagesMonitor
     {
         public int NewMessagesMonitorId { get; set; }
-        public bool Folirane  { get; set; }
-        public bool ManualWork  { get; set; }
-        public bool Falcing { get; set; }
-        public bool InkChet  { get; set; }
-        public bool Kovertirane  { get; set; }
-        public bool Sklad  { get; set; }
-        public bool Drivers  { get; set; }
+        public bool Folirung { get; set; }
+        public bool Handarbeit { get; set; }
+        public bool Inkchet { get; set; }
+        public bool Falcen { get; set; }
+        public bool Covertirung { get; set; }
+        public bool Lager { get; set; }
+        public bool Fahrer { get; set; }
 
     }
 }

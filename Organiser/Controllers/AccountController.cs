@@ -41,17 +41,17 @@ namespace Organiser.Controllers
             {
                 UsersViewModel model = new UsersViewModel();
                 IEnumerable<User> users;
-                users = _userRepository.Users;
-                foreach (User u in users)
+                users = _userRepository.GetUsers;
+                foreach (User user in users)
                 {
-                    u.UserRolesDropdown = new List<SelectListItem>();
+                    user.UserRolesDropdown = new List<SelectListItem>();
                     List<string> userStringRoles = new List<string>();
-                    foreach (UserRole ur in u.UserRoles)
+                    foreach (UserRole role in user.UserRoles)
                     {
-                        userStringRoles.Add(((Locations)ur.Role).ToString());
+                        userStringRoles.Add(((Locations)role.Role).ToString());
                     }
-                    u.UserRoles = null;
-                    u.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
+                    user.UserRoles = null;
+                    user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
                 }
 
                 return View(new UsersViewModel
@@ -63,23 +63,6 @@ namespace Organiser.Controllers
             {
                 return Error("You need to be logged in as admin to do this.");
             }
-        }
-
-        public ViewResult InspectUser()
-        {
-            //go figure
-            var loggedInUser = HttpContext.User;
-            var loggedInUserName = loggedInUser.Identity.Name; // This is our username we set earlier in the claims. 
-
-            var loggedInUserName2 = loggedInUser.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name);
-            var identity = (ClaimsIdentity)User.Identity;
-            List<Claim> claims = identity.Claims.ToList();
-            bool sss = identity.Claims.Any(x => x.Value == "admin");
-            var ss = claims[1].Value;
-            claims.Remove(loggedInUserName2);
-            List<int> userRoles = new List<int>();
-            var loggedInUserName3 = loggedInUser.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value; //Another way to get the name or any other claim we set. 
-            return View();
         }
 
         [HttpGet]
@@ -122,6 +105,7 @@ namespace Organiser.Controllers
 
                 var userIdentity = new ClaimsIdentity(claims, "login");
                 ClaimsPrincipal principal = new ClaimsPrincipal(userIdentity);
+
                 if (model.RememberMe)
                 {
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,
@@ -141,7 +125,7 @@ namespace Organiser.Controllers
 
                 return RedirectToAction("Index", "Order");
             }
-            ViewBag.Wrong = "User name or password wrong! Try again! *";
+            ViewBag.errorMessage = "User name or password wrong. Please try again. *";
             return View();
         }
 
@@ -165,7 +149,7 @@ namespace Organiser.Controllers
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(
-        [Bind("UserName, Password, ConfirmPassword, IsAdmin, Role0, Role1, Role2, Role3, Role4, Role5, Role6, Role7")] UsersCreateUpdateViewModel model)
+        [Bind("UserEntity, Role0, Role1, Role2, Role3, Role4, Role5, Role6, Role7")] UsersCreateUpdateViewModel model)
         {
             if (!UserIsAdmin())
             {
@@ -182,14 +166,14 @@ namespace Organiser.Controllers
             List<int> roleList = roleOrganiser(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
                 model.Role4, model.Role5, model.Role6 });
 
-            if (model.Password != model.ConfirmPassword)
+            if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
             {
                 model.RoleDropDowns = RoleDropdownsWithSelectedRoles(roleOrganiser(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
                 model.Role4, model.Role5, model.Role6 }));
                 ViewBag.errorMessage = "Password and Confirm Password fields must match!";
                 return View(model);
             }
-            else if (_userRepository.GetUserByName(model.UserName) != null)
+            else if (_userRepository.GetUserByName(model.UserEntity.UserName) != null)
             {
                 model.RoleDropDowns = RoleDropdownsWithSelectedRoles(roleOrganiser(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
                 model.Role4, model.Role5, model.Role6 }));
@@ -261,21 +245,20 @@ namespace Organiser.Controllers
 
             UsersCreateUpdateViewModel model = BuildModelFromUser(user);
             model.RoleDropDowns = RoleDropdownsWithSelectedRoles(user.UserRoles.Select(x => x.Role).ToList());
-            model.ConfirmPassword = model.Password;
             return View(model);
         }
 
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit([Bind("UserId, UserName, Password, ConfirmPassword, IsAdmin, Role0, Role1, Role2, Role3, Role4, Role5, Role6, Role7")] UsersCreateUpdateViewModel model)
+        public async Task<IActionResult> Edit([Bind("UserEntity, Role0, Role1, Role2, Role3, Role4, Role5, Role6, Role7")] UsersCreateUpdateViewModel model)
         {
             if (!UserIsAdmin())
             {
                 return Error("You need to be logged in as admin to do this.");
             }
 
-            if (model.Password != model.ConfirmPassword)
+            if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
             {
                 model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
                 model.Role4, model.Role5, model.Role6, model.Role7 });
@@ -290,18 +273,18 @@ namespace Organiser.Controllers
                 return View(model);
             }
 
-            if (!_userRepository.UserExists(model.UserId))
+            if (!_userRepository.UserExists(model.UserEntity.UserId))
             {
-                return Error("User with user id " + model.UserId.ToString() + " doesn't exist.");
+                return Error("User with user id " + model.UserEntity.UserId.ToString() + " doesn't exist.");
             }
-            if (_userRepository.GetUserByName(model.UserName) != null && _userRepository.GetUserByName(model.UserName).UserId != model.UserId)
+            if (_userRepository.GetUserByName(model.UserEntity.UserName) != null && _userRepository.GetUserByName(model.UserEntity.UserName).UserId != model.UserEntity.UserId)
             {
                 model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
                 model.Role4, model.Role5, model.Role6, model.Role7 });
-                ViewBag.errorMessage = "A user with username " + model.UserName + " already exists.";
+                ViewBag.errorMessage = "A user with username " + model.UserEntity.UserName + " already exists.";
                 return View(model);
             }
-            User user = _userRepository.GetUserAndRolesById(model.UserId);
+            User user = _userRepository.GetUserAndRolesById(model.UserEntity.UserId);
             BuildUserEntity(model, ref user);
 
 
@@ -315,7 +298,7 @@ namespace Organiser.Controllers
 
             if (roleList.Count > 0)
             {
-               user.UserRoles = CreateUserRoles(user, roleList.Distinct().ToList());
+                user.UserRoles = CreateUserRoles(user, roleList.Distinct().ToList());
             }
 
             try
@@ -406,7 +389,7 @@ namespace Organiser.Controllers
             {
 
                 var user = _appDbContext.Users.FirstOrDefault(u => u.UserId == id);
-                if(HttpContext.User.Identity.Name == user.UserName)
+                if (HttpContext.User.Identity.Name == user.UserName)
                 {
                     return Error("You can not delete your own user.");
                 }
@@ -428,15 +411,6 @@ namespace Organiser.Controllers
             }
         }
 
-        //persistent cookies
-        //    await HttpContext.SignInAsync(
-        //CookieAuthenticationDefaults.AuthenticationScheme,
-        //new ClaimsPrincipal(claimsIdentity),
-        //new AuthenticationProperties
-        //{
-        //    IsPersistent = true
-        //});
-
         private List<int> roleOrganiser(List<int> roleNum)
         {
             List<int> organisedList = new List<int>();
@@ -445,8 +419,8 @@ namespace Organiser.Controllers
                 if (roleNum[i] != 0)
                 {
                     if (!organisedList.Contains(roleNum[i]))
-                    { 
-                    organisedList.Add(roleNum[i]);
+                    {
+                        organisedList.Add(roleNum[i]);
                     }
                 }
             }
@@ -461,7 +435,6 @@ namespace Organiser.Controllers
             {
                 roleList.Add(new UserRole { Role = role });
             }
-
             return roleList;
         }
 
@@ -472,22 +445,25 @@ namespace Organiser.Controllers
         }
         private void BuildUserEntity(UsersCreateUpdateViewModel model, ref User user)
         {
-            user.UserId = model.UserId;
-            user.UserName = model.UserName;
-            user.Password = model.Password;
-            user.ConfirmPassword = model.ConfirmPassword;
-            user.IsAdmin = model.IsAdmin;
+            user.UserId = model.UserEntity.UserId;
+            user.UserName = model.UserEntity.UserName;
+            user.Password = model.UserEntity.Password;
+            user.ConfirmPassword = model.UserEntity.ConfirmPassword;
+            user.IsAdmin = model.UserEntity.IsAdmin;
         }
 
         private UsersCreateUpdateViewModel BuildModelFromUser(User user)
         {
             return new UsersCreateUpdateViewModel()
             {
-                UserId = user.UserId,
-                UserName = user.UserName,
-                Password = user.Password,
-                ConfirmPassword = user.ConfirmPassword,
-                IsAdmin = user.IsAdmin
+                UserEntity = new User()
+                {
+                    UserId = user.UserId,
+                    UserName = user.UserName,
+                    Password = user.Password,
+                    ConfirmPassword = user.Password,
+                    IsAdmin = user.IsAdmin
+                }
             };
         }
 

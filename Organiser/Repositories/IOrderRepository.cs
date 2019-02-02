@@ -9,14 +9,14 @@ namespace Organiser.Models
     public interface IOrderRepository
     {
         string GetOrderNumberByOrderId(int orderId);
-        List<Order> GetAllActiveOrdersForLocation(int locStateType);
+        List<Order> GetAllActiveOrdersForLocation(int DepartmentStateType);
         IEnumerable<Order> Orders { get; }
-        IQueryable<Order> OrdersAndLocStates { get; }
+        IQueryable<Order> OrdersAndDepartmentStates { get; }
         bool OrderExists(int id);
         Order GetOrderById(int? OrderId);
-        Order GetOrderAndLocStatesById(int orderId);
+        Order GetOrderAndDepartmentStatesById(int orderId);
         Order GetOrderByOrderNumber(string orderNubmer);
-        IQueryable<Order> GetOrdersAndLocStatesBySearchId(string SearchId);
+        IQueryable<Order> GetOrdersAndDepartmentStatesBySearchId(string SearchId);
         IQueryable<Order> GetAvailableOrdersForWork(int locationNameNum);
         bool OrderExistsByOrderNumber(string orderNumber);
     }

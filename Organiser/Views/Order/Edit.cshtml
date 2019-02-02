@@ -18,6 +18,11 @@
                 <label asp-for="OrderNumber"></label>
             </td>
             <td>
+                <label asp-for="Customer" class="control-label centralised"></label>
+                <input asp-for="Customer" class="form-control centralised" />
+                <span asp-validation-for="Customer" class="text-danger centralised"></span>
+            </td>
+            <td>
                 <div class="form-group">
                     <div class="col-md-10">
                         <input asp-for="OrderNumber" class="form-control" />

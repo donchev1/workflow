@@ -42,7 +42,7 @@ namespace Organiser
             });
             services.AddTransient<IOrderRepository, OrderRepository>();
             services.AddTransient<IUserRepository, UserRepository>();
-            services.AddTransient<ILocStateRepository, LocStateRepository>();
+            services.AddTransient<IDepartmentStateRepository, DepartmentStateRepository>();
             services.AddTransient<INoteRepository, NoteRepository>();
             services.AddTransient<ILogRepository, LogRepository>();
             services.Configure<IISOptions>(options =>
@@ -80,12 +80,12 @@ namespace Organiser
 
                 routes.MapRoute(
                     name: "NonDefault",
-                    template: "{controller=Order}/{action=Index}/{locStateId?}");
+                    template: "{controller=Order}/{action=Index}/{DepartmentStateId?}");
                 
 
                 routes.MapRoute(
                     name: "markAsFinished",
-                    template: "{controller}/{action}/{locStateId?}/{errorType?}/{message?}/{showMessages?}");
+                    template: "{controller}/{action}/{DepartmentStateId?}/{errorType?}/{message?}/{showMessages?}");
             });
         }
     }

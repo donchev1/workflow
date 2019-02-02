@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Organiser.Models;
 using Organiser.ViewModels;
@@ -19,25 +18,22 @@ namespace Organiser.Controllers
         public AppDbContext _appDbContext;
         public IOrderRepository _orderRepository;
         public IUserRepository _userRepository;
-        public ILocStateRepository _locStateRepository;
+        public IDepartmentStateRepository _DepartmentStateRepository;
         public IHostingEnvironment _hostingEnvironment;
         public ILogRepository _logRepository;
-
-
-
 
         public OrderController(
             IHostingEnvironment hostingEnv,
             IOrderRepository orderList,
             AppDbContext appDbContext,
             IUserRepository userRepository,
-            ILocStateRepository locStateRepository,
+            IDepartmentStateRepository DepartmentStateRepository,
             ILogRepository logRepository)
         {
             _appDbContext = appDbContext;
             _orderRepository = orderList;
             _userRepository = userRepository;
-            _locStateRepository = locStateRepository;
+            _DepartmentStateRepository = DepartmentStateRepository;
             _hostingEnvironment = hostingEnv;
             _logRepository = logRepository;
         }
@@ -47,9 +43,10 @@ namespace Organiser.Controllers
         {
             IQueryable<Order> orders;
             int pageSize = 15;
+
             if (SearchID != "" && SearchID != null)
             {
-                orders = _orderRepository.GetOrdersAndLocStatesBySearchId(SearchID);
+                orders = _orderRepository.GetOrdersAndDepartmentStatesBySearchId(SearchID);
 
                 return View(new OrderStateViewModel
                 {
@@ -57,7 +54,7 @@ namespace Organiser.Controllers
                 });
             }
 
-            orders = _orderRepository.OrdersAndLocStates;
+            orders = _orderRepository.OrdersAndDepartmentStates;
 
             return View(new OrderStateViewModel
             {
@@ -84,6 +81,11 @@ namespace Organiser.Controllers
         [Authorize]
         public IActionResult Create()
         {
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            {
+                return RedirectToAction("Logout", "Account");
+            }
+
             TempData["Locations"] = LocationDefaults();
             return View();
         }
@@ -94,7 +96,7 @@ namespace Organiser.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("OrderId, OrderNumber, EntityType, EntityCount")] Order order,
+        public async Task<IActionResult> Create([Bind("Customer, OrderId, OrderNumber, EntityType, EntityCount, DeadLineDate")] Order order,
             int locname0, int locname1, int locname2, int locname3,
             int locname4, int locname5, int locname6)
         {
@@ -102,29 +104,34 @@ namespace Organiser.Controllers
             {
                 try
                 {
+                    if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+                    {
+                        return RedirectToAction("Logout", "Account");
+                    }
+
                     if (_orderRepository.OrderExistsByOrderNumber(order.OrderNumber))
                     {
                         return Error("Error: order with order number " + order.OrderNumber + " already exists.");
                     }
-                    List<int> locStatesUnorganised = new List<int> { locname0, locname1, locname2, locname3, locname4, locname5, locname6 };
+                    List<int> DepartmentStatesUnorganised = new List<int> { locname0, locname1, locname2, locname3, locname4, locname5, locname6 };
 
                     order.CreatedAt = DateTime.Now;
 
-                    List<int> locStatesOrganised = locStateOrganiser(locStatesUnorganised);
-                    List<LocState> locStateObjects = new List<LocState>();
+                    List<int> DepartmentStatesOrganised = DepartmentStateOrganiser(DepartmentStatesUnorganised);
+                    List<DepartmentState> DepartmentStateObjects = new List<DepartmentState>();
 
-                    if (locStatesOrganised.Count() > 0)
+                    if (DepartmentStatesOrganised.Count() > 0)
                     {
-                        locStateObjects = CreateOrderLocStates(locStatesOrganised, order);
+                        DepartmentStateObjects = CreateOrderDepartmentStates(DepartmentStatesOrganised, order);
                     }
                     else
                     {
-                        locStatesOrganised.Add(7); //drivers
-                        locStateObjects = CreateOrderLocStates(locStatesOrganised, order);
+                        DepartmentStatesOrganised.Add(7); //drivers
+                        DepartmentStateObjects = CreateOrderDepartmentStates(DepartmentStatesOrganised, order);
                     }
 
                     order.EntitiesNotProcessed = order.EntityCount;
-                    order.LocStates = locStateObjects;
+                    order.DepartmentStates = DepartmentStateObjects;
                     order.Status = ((Statuses)1).ToString();
                     _appDbContext.Add(order);
                     await _appDbContext.SaveChangesAsync();
@@ -146,58 +153,45 @@ namespace Organiser.Controllers
             return View("Create", order);
         }
 
-        //[HttpGet]
-        //public IActionResult CreateLocList(List<int?> orderIDandCount)
-        //{
-        //    TempData["Locations"] = HelperMethods.locationDefaults();
-        //    return View(orderIDandCount);
-        //}
-
-        [HttpGet]
-        public void TestMethod()
-        {
-            int order = 4003;
-            int num = 1;
-            LocState targetLocState = _locStateRepository.GetLocStateByOrderIdAndLocNum(order, num);
-
-        }
-
-
-
         // GET: Order/Edit/5
         [Authorize]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
             {
-                return NotFound();
+                return Error("Order doesn't exist.");
+            }
+
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            {
+                return RedirectToAction("Logout", "Account");
             }
 
             var order = await _appDbContext.Orders.SingleOrDefaultAsync(m => m.OrderId == id);
             if (order == null)
             {
-                return NotFound();
+                return Error("Order doesn't exist.");
             }
-            order.StatusDefaultsDropdown = StatusDefaults();
+            order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
             return View(order);
         }
 
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("OrderId, OrderNumber, EntityType, Status")] Order order)
+        public async Task<IActionResult> Edit(int id, [Bind("Customer, OrderId, OrderNumber, EntityType, Status")] Order order)
         {
 
-            if (!_userRepository.GetUserRolesByUserName(HttpContext.User.Identity.Name).Contains(GetLocationIntValue("Orders")))
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
             {
-                return Error("You don't have permissions to do this.");
+                return RedirectToAction("Logout", "Account");
             }
 
 
             if (_orderRepository.GetOrderByOrderNumber(order.OrderNumber) != null && _orderRepository.GetOrderByOrderNumber(order.OrderNumber).OrderId != order.OrderId)
             {
                 ViewBag.errorMessage = "Error: order with order number " + order.OrderNumber + " already exists.";
-                order.StatusDefaultsDropdown = StatusDefaults();
+                order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
                 return View(order);
             }
 
@@ -205,22 +199,27 @@ namespace Organiser.Controllers
             {
                 try
                 {
-                    Order oldOrderState = _orderRepository.GetOrderAndLocStatesById(order.OrderId);
+                    Order oldOrderState = _orderRepository.GetOrderAndDepartmentStatesById(order.OrderId);
 
                     if (order.Status != oldOrderState.Status)
                     {
-                        List<LocState> newLocStates = oldOrderState.LocStates;
+                        List<DepartmentState> newDepartmentStates = oldOrderState.DepartmentStates;
                         if (order.Status == ((Statuses)3).ToString())
                         {
-                            foreach (LocState ls in newLocStates)
+                            if (order.StartedAt == DateTime.MinValue)
+                            {
+                                order.StartedAt = DateTime.Now;
+                            }
+                            order.FinshedAt = DateTime.Now;
+                            foreach (DepartmentState ls in newDepartmentStates)
                             {
                                 ls.Status = order.Status;
                                 ls.EntitiesInProgress = 0;
-                                ls.EntitiesReadyForCollection = 0;
+                                ls.EntitiesRFC = 0;
                             }
                         }
                         oldOrderState.EntitiesNotProcessed = 0;
-                        oldOrderState.LocStates = newLocStates;
+                        oldOrderState.DepartmentStates = newDepartmentStates;
                     }
                     UpdateOrderValues(ref oldOrderState, order);
 
@@ -245,6 +244,7 @@ namespace Organiser.Controllers
                 }
                 return RedirectToAction("Details", new { id = order.OrderId });
             }
+            order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
             return View(order);
         }
 
@@ -252,42 +252,48 @@ namespace Organiser.Controllers
         [Authorize]
         public PassEntitiesResultModel PassEntities(EntityOrganiserViewModel model)
         {
-            LocState sourceLocState = _locStateRepository.GetLocStateById(model.LocStateId);
-            LocState targetLocState = _locStateRepository.GetLocStateByOrderIdAndLocNum(sourceLocState.OrderId, sourceLocState.LocationPosition + 1);
+            DepartmentState sourceDepartmentState = _DepartmentStateRepository.GetDepartmentStateById(model.DepartmentStateId);
+            DepartmentState targetDepartmentState = _DepartmentStateRepository.GetDepartmentStateByOrderIdAndLocNum(sourceDepartmentState.OrderId, sourceDepartmentState.LocationPosition + 1);
 
-            if (sourceLocState.EntitiesReadyForCollection >= model.EntitiesPassed)
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(targetDepartmentState.Name)))
             {
-                sourceLocState.EntitiesReadyForCollection -= model.EntitiesPassed;
+                Error("Something went wrong, logout and log back in to fix the issue.");
+            }
+
+            if (sourceDepartmentState.EntitiesRFC >= model.EntitiesPassed)
+            {
+                sourceDepartmentState.EntitiesRFC -= model.EntitiesPassed;
             }
             else
             {
                 Error("Entity count insufficient!");
             }
 
-            if (targetLocState.Status == ((Statuses)1).ToString())
+            if (targetDepartmentState.Status == ((Statuses)1).ToString())
             {
-                targetLocState.Status = ((Statuses)2).ToString();
-                targetLocState.Start = DateTime.Now;
+                targetDepartmentState.Status = ((Statuses)2).ToString();
+                targetDepartmentState.Start = DateTime.Now;
             }
 
-            targetLocState.EntitiesInProgress += model.EntitiesPassed;
+            targetDepartmentState.EntitiesInProgress += model.EntitiesPassed;
 
-            _appDbContext.Update(sourceLocState);
-            _appDbContext.Update(targetLocState);
+            _appDbContext.Update(sourceDepartmentState);
+            _appDbContext.Update(targetDepartmentState);
 
             _appDbContext.SaveChanges();
             _logRepository.CreateLog(
                         HttpContext.User.Identity.Name,
-                        "Moved " + model.EntitiesPassed.ToString() + " " + _orderRepository.GetOrderById(sourceLocState.OrderId).EntityType + " from " + sourceLocState.Name + " to " + targetLocState.Name + ".",
+                        "Moved " + model.EntitiesPassed.ToString() + " " + _orderRepository.GetOrderById(sourceDepartmentState.OrderId).EntityType + " from " + sourceDepartmentState.Name + " to " + targetDepartmentState.Name + ".",
                         DateTime.Now,
-                        _orderRepository.GetOrderNumberByOrderId(sourceLocState.OrderId));
+                        _orderRepository.GetOrderNumberByOrderId(sourceDepartmentState.OrderId));
 
             PassEntitiesResultModel resultModel = new PassEntitiesResultModel()
             {
-                SourceEntitiesReadyForCollection = sourceLocState.EntitiesReadyForCollection,
-                TargetEntitiesInProgress = targetLocState.EntitiesInProgress,
-                TargetLocStateId = targetLocState.LocStateId,
-                TargetLocStateStatus = targetLocState.Status
+                SourceEntitiesRFC = sourceDepartmentState.EntitiesRFC,
+                TargetEntitiesInProgress = targetDepartmentState.EntitiesInProgress,
+                TargetDepartmentStateId = targetDepartmentState.DepartmentStateId,
+                TargetDepartmentStateStatus = targetDepartmentState.Status,
+                StartTime = targetDepartmentState.Start.ToString("dd/MM/yy (HH:mm)")
             };
 
             return resultModel;
@@ -310,7 +316,7 @@ namespace Organiser.Controllers
                     ViewBag.errorMessage = message;
                 }
             }
-            var order = _orderRepository.GetOrderAndLocStatesById(id);
+            var order = _orderRepository.GetOrderAndDepartmentStatesById(id);
             //string userRole = ((UserRoles)_userRepository.GetUserByName(HttpContext.User.Identity.Name).Role).ToString();
 
             if (order == null)
@@ -350,7 +356,7 @@ namespace Organiser.Controllers
             string UserName = HttpContext.User.Identity.Name;
             List<int> userRoles = _userRepository.GetUserRolesByUserName(UserName);
             List<int> allowedLocationPositions = new List<int>();
-            foreach (LocState ls in order.LocStates)
+            foreach (DepartmentState ls in order.DepartmentStates)
             {
                 if (userRoles.Contains(GetLocationIntValue(ls.Name)) && ls.Status != ((Statuses)3).ToString())
                 {
@@ -375,7 +381,7 @@ namespace Organiser.Controllers
         public IActionResult FirstPickUp([Bind("OrderId, EntitiesPassed")] OrderStateViewModel model)
         {
             Order order = new Order();
-            LocState firstLocState;
+            DepartmentState firstDepartmentState;
             string errorMessage = "";
 
             if (!ModelState.IsValid)
@@ -405,16 +411,20 @@ namespace Organiser.Controllers
                 return RedirectToAction("Details", new { id = model.OrderId, message = "Number of entities must be between 1 and " + order.EntitiesNotProcessed.ToString() });
             }
 
+            firstDepartmentState = _appDbContext.DepartmentStates.FirstOrDefault(ls => ls.OrderId == order.OrderId && ls.LocationPosition == 1);
 
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(firstDepartmentState.Name)))
+            {
+                return RedirectToAction("Logout", "Account");
+            }
 
             order.EntitiesNotProcessed -= model.EntitiesPassed;
-            firstLocState = _appDbContext.LocStates.FirstOrDefault(ls => ls.OrderId == order.OrderId && ls.LocationPosition == 1);
-            firstLocState.EntitiesInProgress += model.EntitiesPassed;
-            order.LocStates.Add(firstLocState);
-            if (firstLocState.Status == ((Statuses)1).ToString())
+            firstDepartmentState.EntitiesInProgress += model.EntitiesPassed;
+            order.DepartmentStates.Add(firstDepartmentState);
+            if (firstDepartmentState.Status == ((Statuses)1).ToString())
             {
-                firstLocState.Status = ((Statuses)2).ToString();
-                firstLocState.Start = DateTime.Now;
+                firstDepartmentState.Status = ((Statuses)2).ToString();
+                firstDepartmentState.Start = DateTime.Now;
             }
             if (order.Status != ((Statuses)2).ToString())
             {
@@ -427,11 +437,11 @@ namespace Organiser.Controllers
 
             _logRepository.CreateLog(
             HttpContext.User.Identity.Name,
-            "Started processing " + model.EntitiesPassed.ToString() + " " + _orderRepository.GetOrderById(model.OrderId).EntityType + " in " + firstLocState.Name + ".",
+            "Started processing " + model.EntitiesPassed.ToString() + " " + _orderRepository.GetOrderById(model.OrderId).EntityType + " in " + firstDepartmentState.Name + ".",
             DateTime.Now,
             order.OrderNumber);
 
-            return RedirectToAction("Details", new { id = model.OrderId, messageType = 1, message = model.EntitiesPassed.ToString() + " entities successfully passed to " + firstLocState.Name });
+            return RedirectToAction("Details", new { id = model.OrderId, messageType = 1, message = model.EntitiesPassed.ToString() + " entities successfully passed to " + firstDepartmentState.Name });
         }
 
         // GET: Order/Delete/5
@@ -441,6 +451,11 @@ namespace Organiser.Controllers
             if (id == null)
             {
                 return NotFound();
+            }
+
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            {
+                return RedirectToAction("Logout", "Account");
             }
 
             var order = _orderRepository.GetOrderById(id);
@@ -461,6 +476,11 @@ namespace Organiser.Controllers
         [Authorize]
         public IActionResult DeleteConfirmed(int id)
         {
+
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            {
+                return RedirectToAction("Logout", "Account");
+            }
             var order = _orderRepository.GetOrderById(id);
             _appDbContext.Orders.Remove(order);
 
@@ -483,13 +503,13 @@ namespace Organiser.Controllers
         }
 
 
-        private List<LocState> CreateOrderLocStates(List<int> locations, Order order)
+        private List<DepartmentState> CreateOrderDepartmentStates(List<int> locations, Order order)
         {
-            List<LocState> orderNewLocStates = new List<LocState>();
+            List<DepartmentState> orderNewDepartmentStates = new List<DepartmentState>();
             int count = 0;
             foreach (int l in locations)
             {
-                orderNewLocStates.Add(new LocState
+                orderNewDepartmentStates.Add(new DepartmentState
                 {
                     Name = ((Locations)l).ToString(),
                     LocationPosition = count + 1,
@@ -499,17 +519,17 @@ namespace Organiser.Controllers
 
                 ++count;
             }
-            return orderNewLocStates;
+            return orderNewDepartmentStates;
         }
 
-        private List<int> locStateOrganiser(List<int> locStates)
+        private List<int> DepartmentStateOrganiser(List<int> DepartmentStates)
         {
             List<int> organisedList = new List<int>();
-            for (int i = 0; i < locStates.Count(); i++)
+            for (int i = 0; i < DepartmentStates.Count(); i++)
             {
-                if (locStates[i] != 0)
+                if (DepartmentStates[i] != 0)
                 {
-                    organisedList.Add(locStates[i]);
+                    organisedList.Add(DepartmentStates[i]);
                 }
             }
             return organisedList;

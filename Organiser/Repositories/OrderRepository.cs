@@ -31,25 +31,26 @@ namespace Organiser.Models
             get { return _appDbContext.Orders; }
         }
 
-        public IQueryable<Order> GetOrdersAndLocStatesBySearchId(string SearchId)
+        public IQueryable<Order> GetOrdersAndDepartmentStatesBySearchId(string SearchId)
         { 
             return _appDbContext.Orders.Where(o => o.OrderNumber.Contains(SearchId))
-                        .Include(order => order.LocStates)
+                        .Include(order => order.DepartmentStates)
                         .OrderByDescending(l => l.CreatedAt);
         }
-        public IQueryable<Order> OrdersAndLocStates
+        public IQueryable<Order> OrdersAndDepartmentStates
         {
             get
             {
                 return _appDbContext.Orders
-                  .Include(order => order.LocStates);
+                  .Include(order => order.DepartmentStates)
+                  .OrderByDescending(l => l.CreatedAt);
             }
         }
 
-        public Order GetOrderAndLocStatesById(int orderId)
+        public Order GetOrderAndDepartmentStatesById(int orderId)
         {
             return _appDbContext.Orders
-                .Include(order => order.LocStates)
+                .Include(order => order.DepartmentStates)
                 .FirstOrDefault(o => o.OrderId == orderId);
         }
         public Order GetOrderById(int? OrderId)
@@ -70,21 +71,21 @@ namespace Organiser.Models
 
         public IQueryable<Order> GetAvailableOrdersForWork(int locationNameNum)
         {
-            return  _appDbContext.Orders.Where(o => o.Status == ((Statuses)2).ToString() || o.EntitiesNotProcessed > 0).Include(o => o.LocStates)
-                .Where(o => (o.LocStates.Any(ls => ls.Name == ((Locations)locationNameNum).ToString()) && o.EntitiesNotProcessed > 0 && o.LocStates.Any(ls1 => ls1.Name == ((Locations)locationNameNum).ToString() && ls1.LocationPosition == 1))
-                || o.LocStates.Any(beforeLS => beforeLS.LocationPosition == o.LocStates.FirstOrDefault(originalLS => originalLS.Name == ((Locations)locationNameNum).ToString()).LocationPosition - 1 && beforeLS.EntitiesReadyForCollection > 0));
+            return  _appDbContext.Orders.Where(o => o.Status == ((Statuses)2).ToString() || o.EntitiesNotProcessed > 0).Include(o => o.DepartmentStates)
+                .Where(o => (o.DepartmentStates.Any(ls => ls.Name == ((Locations)locationNameNum).ToString()) && o.EntitiesNotProcessed > 0 && o.DepartmentStates.Any(ls1 => ls1.Name == ((Locations)locationNameNum).ToString() && ls1.LocationPosition == 1))
+                || o.DepartmentStates.Any(beforeLS => beforeLS.LocationPosition == o.DepartmentStates.FirstOrDefault(originalLS => originalLS.Name == ((Locations)locationNameNum).ToString()).LocationPosition - 1 && beforeLS.EntitiesRFC > 0));
         }
 
-        public List<Order> GetAllActiveOrdersForLocation(int locStateType)
+        public List<Order> GetAllActiveOrdersForLocation(int DepartmentStateType)
         {
-            List<Order> activeOrders =  _appDbContext.Orders.Include(o => o.LocStates)
-                .Where(o => o.Status == ((Statuses)2).ToString() && o.LocStates.Any(ls => ls.Name == ((Locations)locStateType).ToString() && ls.EntitiesInProgress > 0)).ToList();
+            List<Order> activeOrders =  _appDbContext.Orders.Include(o => o.DepartmentStates)
+                .Where(o => o.Status == ((Statuses)2).ToString() && o.DepartmentStates.Any(ls => ls.Name == ((Locations)DepartmentStateType).ToString() && ls.EntitiesInProgress > 0)).ToList();
             
             foreach (Order o in activeOrders)
             {
-                foreach (LocState ls in o.LocStates)
+                foreach (DepartmentState ls in o.DepartmentStates)
                 {
-                    o.LocStates = o.LocStates.Where(ls1 => ls1.Name == ((Locations)locStateType).ToString() && ls1.EntitiesInProgress > 0).ToList();
+                    o.DepartmentStates = o.DepartmentStates.Where(ls1 => ls1.Name == ((Locations)DepartmentStateType).ToString() && ls1.EntitiesInProgress > 0).ToList();
                 }
             }
 

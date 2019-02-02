@@ -11,12 +11,6 @@
 <br />
 <hr />
 <div class="text-align-center">
-    @if (User.IsInRole("Orders"))
-    {
-        <p class="button">
-            <a class="btn btn-primary" href="/order/Create">Create New Order</a>
-        </p>
-    }
     <br />
 
     <form asp-controller="Order" asp-action="Index" method="get">
@@ -32,24 +26,26 @@
         <th>Entity Type</th>
         <th>Entity Count</th>
         <th>Status</th>
+        <th>Customer</th>
     </tr>
     @foreach (var order in Model.OrderListPaginated)
     {
-        <tr class="orders">
-            <td>@order.OrderNumber</td>
-            <td>@order.EntityType</td>
-            <td>@order.EntityCount</td>
-            <td>@order.Status</td>
-            <td>
-                <a class="btn btn-primary" href="/order/Details/@order.OrderId">Details</a>
-                @if (User.IsInRole("Orders"))
-                {
-                    string twoLines = "  ||  ";
-                    @twoLines<a class="btn btn-primary" href="order/Edit/@order.OrderId">Edit</a> @twoLines
-                    <a class="btn btn-danger" href="order/Delete/@order.OrderId">Delete</a>
-                }
-            </td>
-        </tr>
+    <tr class="orders">
+        <td>@order.OrderNumber</td>
+        <td>@order.EntityType</td>
+        <td>@order.EntityCount</td>
+        <td>@order.Status</td>
+        <td>@order.Customer</td>
+        <td>
+            <a class="btn btn-primary" href="/order/Details/@order.OrderId">Details</a>
+            @if (User.IsInRole("Orders"))
+            {
+                string twoLines = "  ||  ";
+                @twoLines<a class="btn btn-primary" href="order/Edit/@order.OrderId">Edit</a> @twoLines
+                <a class="btn btn-danger" href="order/Delete/@order.OrderId">Delete</a>
+            }
+        </td>
+    </tr>
     }
 </table>
 <br />

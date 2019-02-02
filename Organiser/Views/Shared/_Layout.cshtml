@@ -4,17 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
-
-    <environment names="Development">
-        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
-        <link rel="stylesheet" href="~/css/site.css" />
-    </environment>
-    <environment names="Staging,Production">
-        <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.min.css"
-              asp-fallback-href="~/lib/bootstrap/dist/css/bootstrap.min.css"
-              asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
-        <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
-    </environment>
+    <script type="text/javascript">
+            var RootUrl = '@Url.Content("~/")';
+    </script>
+    <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.css"
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true" />
 </head>
 <body>
     <nav class="navbar navbar-inverse navbar-fixed-top">
@@ -29,43 +25,58 @@
             </div>
             <div class="navbar-collapse collapse">
                 <ul class="nav navbar-nav">
+
+
                     @if (User.Identity.IsAuthenticated)
                     {
-                        <li><a asp-area="" asp-controller="Order" asp-action="Index">Orders</a></li>
+                        <li>
+                            <div class="dropdown">
+                                <button class="dropbtn">Orders</button>
+                                <div class="dropdown-content">
+                                    <a asp-area="" asp-controller="Order" asp-action="Index">List</a>
+                                    @if (User.IsInRole("Orders"))
+                                    {
+                                        <a href="/order/Create">Create</a>
+                                    }
+                                </div>
+                            </div>
+                        </li>
                     }
-                    @if (User.Identity.IsAuthenticated && User.Claims.Count() > 1)
+
+
+                    @if (User.IsInRole("Folirung") || User.IsInRole("Handarbeit") || User.IsInRole("Inkchet") || User.IsInRole("Falcen") || User.IsInRole("Covertirung") || User.IsInRole("Lager") || User.IsInRole("Fahrer"))
                     {
                         <li>
                             <div class="dropdown">
                                 <button class="dropbtn">My Work</button>
                                 <div class="dropdown-content">
-                                    @if (User.IsInRole("Folirane"))
+                                    @if (User.IsInRole("Folirung"))
                                     {
-                                        <a href="/LocState/MyWork?locStateId=1">Folirane</a>
+                                        <a href="/DepartmentState/MyWork?DepartmentStateId=1">Folirung</a>
                                     }
-                                    @if (User.IsInRole("ManualWork"))
+                                    @if (User.IsInRole("Handarbeit"))
                                     {
-                                        <a href="/LocState/MyWork?locStateId=2">ManualWork</a>
+                                        <a href="/DepartmentState/MyWork?DepartmentStateId=2">Handarbeit</a>
                                     }
-                                    @if (User.IsInRole("InkChet"))
+                                    @if (User.IsInRole("Inkchet"))
                                     {
-                                        <a href="/LocState/MyWork?locStateId=3">InkChet</a>
+                                        <a href="/DepartmentState/MyWork?DepartmentStateId=3">Inkchet</a>
                                     }
-                                    @if (User.IsInRole("Falcing"))
+                                    @if (User.IsInRole("Falcen"))
                                     {
-                                        <a href="/LocState/MyWork?locStateId=4">Falcing</a>
+                                        <a href="/DepartmentState/MyWork?DepartmentStateId=4">Falcen</a>
                                     }
-                                    @if (User.IsInRole("Kovertirane"))
+                                    @if (User.IsInRole("Covertirung"))
                                     {
-                                        <a href="/LocState/MyWork?locStateId=5">Kovertirane</a>
+                                        <a href="/DepartmentState/MyWork?DepartmentStateId=5">Covertirung</a>
                                     }
-                                    @if (User.IsInRole("Sklad"))
+                                    @if (User.IsInRole("Lager"))
                                     {
-                                        <a href="/LocState/MyWork?locStateId=6">Sklad</a>
+                                        <a href="/DepartmentState/MyWork?DepartmentStateId=6">Lager</a>
                                     }
-                                    @if (User.IsInRole("Drivers"))
+                                    @if (User.IsInRole("Fahrer"))
                                     {
-                                        <a href="/LocState/MyWork?locStateId=7">Drivers</a>
+                                        <a href="/DepartmentState/MyWork?DepartmentStateId=7">Fahrer</a>
                                     }
                                 </div>
                             </div>
@@ -74,33 +85,33 @@
                             <div class="dropdown">
                                 <button class="dropbtn">Available Work</button>
                                 <div class="dropdown-content">
-                                    @if (User.IsInRole("Folirane"))
+                                    @if (User.IsInRole("Folirung"))
                                     {
-                                        <a href="/order/AvailableWork?locationNameNum=1">Folirane</a>
+                                        <a href="/order/AvailableWork?locationNameNum=1">Folirung</a>
                                     }
-                                    @if (User.IsInRole("ManualWork"))
+                                    @if (User.IsInRole("Handarbeit"))
                                     {
-                                        <a href="/order/AvailableWork?locationNameNum=2">ManualWork</a>
+                                        <a href="/order/AvailableWork?locationNameNum=2">Handarbeit</a>
                                     }
-                                    @if (User.IsInRole("InkChet"))
+                                    @if (User.IsInRole("Inkchet"))
                                     {
-                                        <a href="/order/AvailableWork?locationNameNum=3">InkChet</a>
+                                        <a href="/order/AvailableWork?locationNameNum=3">Inkchet</a>
                                     }
-                                    @if (User.IsInRole("Falcing"))
+                                    @if (User.IsInRole("Falcen"))
                                     {
-                                        <a href="/order/AvailableWork?locationNameNum=4">Falcing</a>
+                                        <a href="/order/AvailableWork?locationNameNum=4">Falcen</a>
                                     }
-                                    @if (User.IsInRole("Kovertirane"))
+                                    @if (User.IsInRole("Covertirung"))
                                     {
-                                        <a href="/order/AvailableWork?locationNameNum=5">Kovertirane</a>
+                                        <a href="/order/AvailableWork?locationNameNum=5">Covertirung</a>
                                     }
-                                    @if (User.IsInRole("Sklad"))
+                                    @if (User.IsInRole("Lager"))
                                     {
-                                        <a href="/order/AvailableWork?locationNameNum=6">Sklad</a>
+                                        <a href="/order/AvailableWork?locationNameNum=6">Lager</a>
                                     }
-                                    @if (User.IsInRole("Drivers"))
+                                    @if (User.IsInRole("Fahrer"))
                                     {
-                                        <a href="/order/AvailableWork?locationNameNum=7">Drivers</a>
+                                        <a href="/order/AvailableWork?locationNameNum=7">Fahrer</a>
                                     }
                                 </div>
                             </div>
@@ -112,49 +123,53 @@
                             <div class="dropdown">
                                 <button class="dropbtn">Write Message</button>
                                 <div class="dropdown-content">
-                                    <a href="/Messages/WriteNote?locStateId=1">Folirane</a>
-                                    <a href="/Messages/WriteNote?locStateId=2">ManualWork</a>
-                                    <a href="/Messages/WriteNote?locStateId=3">InkChet</a>
-                                    <a href="/Messages/WriteNote?locStateId=4">Falcing</a>
-                                    <a href="/Messages/WriteNote?locStateId=5">Kovertirane</a>
-                                    <a href="/Messages/WriteNote?locStateId=6">Sklad</a>
-                                    <a href="/Messages/WriteNote?locStateId=7">Drivers</a>
+                                    <a href="/Messages/WriteNote?DepartmentStateId=1">Folirung</a>
+                                    <a href="/Messages/WriteNote?DepartmentStateId=2">Handarbeit</a>
+                                    <a href="/Messages/WriteNote?DepartmentStateId=3">Inkchet</a>
+                                    <a href="/Messages/WriteNote?DepartmentStateId=4">Falcen</a>
+                                    <a href="/Messages/WriteNote?DepartmentStateId=5">Covertirung</a>
+                                    <a href="/Messages/WriteNote?DepartmentStateId=6">Lager</a>
+                                    <a href="/Messages/WriteNote?DepartmentStateId=7">Fahrer</a>
                                 </div>
                             </div>
                         </li>
-                        @if (User.Claims.Count() > 1)
+                    }
+                    @if (User.IsInRole("Folirung") || User.IsInRole("Handarbeit") || User.IsInRole("Inkchet") || User.IsInRole("Falcen") || User.IsInRole("Covertirung") || User.IsInRole("Lager") || User.IsInRole("Fahrer"))
+                    {
+
+                        @if (User.IsInRole("Folirung") || User.IsInRole("Handarbeit") || User.IsInRole("Inkchet") || User.IsInRole("Falcen") || User.IsInRole("Covertirung") || User.IsInRole("Lager") || User.IsInRole("Fahrer"))
                         {
                             <li>
                                 <div class="dropdown">
                                     <button class="dropbtn">Read Messages</button>
                                     <div class="dropdown-content">
-                                        @if (User.IsInRole("Folirane"))
+                                        @if (User.IsInRole("Folirung"))
                                         {
-                                            <a href="/Messages/Index/1">Folirane</a>
+                                            <a href="/Messages/Index/1">Folirung</a>
                                         }
-                                        @if (User.IsInRole("ManualWork"))
+                                        @if (User.IsInRole("Handarbeit"))
                                         {
-                                            <a href="/Messages/Index/2">ManualWork</a>
+                                            <a href="/Messages/Index/2">Handarbeit</a>
                                         }
-                                        @if (User.IsInRole("InkChet"))
+                                        @if (User.IsInRole("Inkchet"))
                                         {
-                                            <a href="/Messages/Index/3">InkChet</a>
+                                            <a href="/Messages/Index/3">Inkchet</a>
                                         }
-                                        @if (User.IsInRole("Falcing"))
+                                        @if (User.IsInRole("Falcen"))
                                         {
-                                            <a href="/Messages/Index/4">Falcing</a>
+                                            <a href="/Messages/Index/4">Falcen</a>
                                         }
-                                        @if (User.IsInRole("Kovertirane"))
+                                        @if (User.IsInRole("Covertirung"))
                                         {
-                                            <a href="/Messages/Index/5">Kovertirane</a>
+                                            <a href="/Messages/Index/5">Covertirung</a>
                                         }
-                                        @if (User.IsInRole("Sklad"))
+                                        @if (User.IsInRole("Lager"))
                                         {
-                                            <a href="/Messages/Index/6">Sklad</a>
+                                            <a href="/Messages/Index/6">Lager</a>
                                         }
-                                        @if (User.IsInRole("Drivers"))
+                                        @if (User.IsInRole("Fahrer"))
                                         {
-                                            <a href="/Messages/Index/7">Drivers</a>
+                                            <a href="/Messages/Index/7">Fahrer</a>
                                         }
                                     </div>
                                 </div>
@@ -194,7 +209,9 @@
             <p class="successMessage">
                 @ViewBag.successMessage
             </p>
-
+            <p class="successMessage">
+                @TempData["success"]
+            </p>
             <p class="errorMessage">
                 @ViewBag.errorMessage
             </p>
@@ -212,7 +229,7 @@
     <environment names="Staging,Production">
         <script src="~/lib/jquery/organiser.js"></script>
         <script src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-2.2.0.min.js"
-                asp-fallback-src="~/lib/jquery/dist/jquery.min.js"
+                asp-fallback-src="~/lib/jquery/dist/jquery.js"
                 asp-fallback-test="window.jQuery"
                 crossorigin="anonymous"
                 integrity="sha384-K+ctZQ+LL8q6tP7I94W+qzQsfRV2a+AfHIi9k8z8l9ggpc8X+Ytst4yBo/hH+8Fk">
@@ -223,7 +240,7 @@
                 crossorigin="anonymous"
                 integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa">
         </script>
-        <script src="~/js/site.min.js" asp-append-version="true"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
     </environment>
 
     @RenderSection("Scripts", required: false)

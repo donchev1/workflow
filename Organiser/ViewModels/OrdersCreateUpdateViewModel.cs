@@ -21,15 +21,15 @@ namespace Organiser.ViewModels
 
         [StringLength(50)]
         public string Status { get; set; }
-        public int LocState0 { get; set; }
-        public int LocState1 { get; set; }
-        public int LocState2 { get; set; }
-        public int LocState3 { get; set; }
-        public int LocState4 { get; set; }
-        public int LocState5 { get; set; }
-        public int LocState6 { get; set; }
-        public int LocState7 { get; set; }
-        public List<List<SelectListItem>> LocStatesDropDowns = new List<List<SelectListItem>>();
+        public int DepartmentState0 { get; set; }
+        public int DepartmentState1 { get; set; }
+        public int DepartmentState2 { get; set; }
+        public int DepartmentState3 { get; set; }
+        public int DepartmentState4 { get; set; }
+        public int DepartmentState5 { get; set; }
+        public int DepartmentState6 { get; set; }
+        public int DepartmentState7 { get; set; }
+        public List<List<SelectListItem>> DepartmentStatesDropDowns = new List<List<SelectListItem>>();
 
     }
 }

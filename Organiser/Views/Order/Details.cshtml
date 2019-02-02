@@ -12,11 +12,15 @@
 
 
 
-<hr />
+<br />
 <table class="centralised tableCellRightBorder ordersTable">
     <tr>
         <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.OrderNumber)</td>
         <td>@Html.DisplayFor(model => model.OrderDetails.OrderNumber)</td>
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.Customer)</td>
+        <td>@Html.DisplayFor(model => model.OrderDetails.Customer)</td>
     </tr>
     <tr>
         <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.EntityType)</td>
@@ -33,6 +37,10 @@
     <tr>
         <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.CreatedAt)</td>
         <td>@Model.OrderDetails.CreatedAt.ToString("dd/MM/yy  (HH:mm)")</td>
+    </tr>
+    <tr>
+        <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.DeadLineDate)</td>
+        <td>@Model.OrderDetails.DeadLineDate.ToString("dd/MM/yy  (HH:mm)")</td>
     </tr>
     <tr>
         <td class="bold">@Html.DisplayNameFor(model => model.OrderDetails.StartedAt)</td>
@@ -70,7 +78,7 @@
 }
 <hr />
 <h2>Department Line</h2>
-<hr />
+<br />
 
 <table class="ordersTable centralised">
     <tr>
@@ -79,6 +87,11 @@
         </th>
         <td>@Model.OrderDetails.EntitiesNotProcessed</td>
         <td></td>
+        @if (User.IsInRole("Orders"))
+        {
+            <td></td>
+            <td></td>
+        }
         @if (Model.AllowedPositions.Count() > 0 && Model.AllowedPositions.Contains(0) && Model.OrderDetails.EntitiesNotProcessed > 0)
         {
             <form asp-action="FirstPickUp">
@@ -97,25 +110,54 @@
     </tr>
     <tr>
         <th>Department</th>
+        @if (User.IsInRole("Orders"))
+        {
+            <th>Started at</th>
+            <th>Finished at</th>
+        }
         <th>Status</th>
         <th>Processing</th>
         <th>Finished</th>
     </tr>
-    @foreach (LocState ls in Model.OrderDetails.LocStates)
+    @foreach (DepartmentState ls in Model.OrderDetails.DepartmentStates)
     {
         <tr>
             <td>@ls.Name</td>
-            <td id="Status_@ls.LocStateId">@ls.Status</td>
-            <td id="InProgress_@ls.LocStateId" class="InProgress">@ls.EntitiesInProgress</td>
-            <td id="RFC_@ls.LocStateId" class="RFC">@ls.EntitiesReadyForCollection</td>
-            @if (Model.AllowedPositions.Count() > 0 && Model.AllowedPositions.Contains(ls.LocationPosition) && ls.EntitiesReadyForCollection > 0)
+
+            @if (User.IsInRole("Orders"))
+            {
+                <td id="StartTime_@ls.DepartmentStateId">
+                    @if (ls.Start == DateTime.MinValue)
+                    {
+                        <p>N/a</p>
+                    }
+                    else
+                    {
+                        @ls.Start.ToString("dd/MM/yy (HH:mm)")
+                    }
+                </td>
+                <td>
+                    @if (ls.Finish == DateTime.MinValue)
+                    {
+                        <p>N/a</p>
+                    }
+                    else
+                    {
+                        @ls.Finish.ToString("dd/MM/yy (HH:mm)")
+                    }
+                </td>
+            }
+            <td id="Status_@ls.DepartmentStateId">@ls.Status</td>
+            <td id="InProgress_@ls.DepartmentStateId" class="InProgress">@ls.EntitiesInProgress</td>
+            <td id="RFC_@ls.DepartmentStateId" class="RFC">@ls.EntitiesRFC</td>
+            @if (Model.AllowedPositions.Count() > 0 && Model.AllowedPositions.Contains(ls.LocationPosition) && ls.EntitiesRFC > 0)
             {
                 <td>
                     <div class="form-firstPickUp">
-                        <input class="form-control pickUpInputBox" min="1" max="@ls.EntitiesReadyForCollection" id="entityCount_@ls.LocStateId" type="number" size="5" />
+                        <input class="form-control pickUpInputBox" min="1" max="@ls.EntitiesRFC" id="entityCount_@ls.DepartmentStateId" type="number" size="5" />
                     </div>
                     <div class="form-firstPickUp">
-                        <input class="btn btn-primary" type="button" value="Pick Up" onclick="pickUp('@ls.LocStateId', '@ls.Name')" />
+                        <input class="btn btn-primary" type="button" value="Pick Up" onclick="pickUp('@ls.DepartmentStateId', '@ls.Name')" />
                     </div>
                 </td>
             }
@@ -125,7 +167,7 @@
 <br />
 <hr />
 <h3>Related Files</h3>
-<hr />
+<br />
 
 @if (Model.FileNamesUrls != null)
 {
@@ -162,7 +204,7 @@ else
 @if (User.IsInRole("Orders"))
 {
     <h3>Upload new files</h3>
-    <hr />
+    <br />
     <div class="text-align-center">
         <form asp-action="UploadFile" asp-controller="FileManager" method="post" enctype="multipart/form-data">
             <div class="form-group">
@@ -186,40 +228,39 @@ else
 
 <script>
 
-    function pickUp(sourceLocStateId, locStateName) {
-        var locStateEntitiesRFC = $("td#RFC_" + sourceLocStateId).text().match(/\d+/);
+    function pickUp(sourceDepartmentStateId, DepartmentStateName) {
+        var DepartmentStateEntitiesRFC = $("td#RFC_" + sourceDepartmentStateId).text().match(/\d+/);
 
-        var entitiesPassed = $("input#entityCount_" + sourceLocStateId).val();
-        if (entitiesPassed === "" || entitiesPassed < 1) {
+        var EntitiesPassed = $("input#entityCount_" + sourceDepartmentStateId).val();
+        if (EntitiesPassed === "" || EntitiesPassed < 1) {
             alert("Please select valid number!");
             return false;
         }
 
-        var entitiesRFC = parseInt(locStateEntitiesRFC[0])
-        if (parseInt(entitiesPassed) > entitiesRFC) {
-            alert("The maximum amount of entities you can pick up is " + locStateEntitiesRFC);
+        var entitiesRFC = parseInt(DepartmentStateEntitiesRFC[0])
+        if (parseInt(EntitiesPassed) > entitiesRFC) {
+            alert("The maximum amount of entities you can pick up is " + DepartmentStateEntitiesRFC);
             return false;
         }
 
-        var confirmation = confirm("Are you sure you want to move " + entitiesPassed + " entities from " + locStateName + " to the next department in the line.");
+        var confirmation = confirm("Are you sure you want to move " + EntitiesPassed + " entities from " + DepartmentStateName + " to the next department in the line.");
         if (confirmation === false) {
             return false;
         }
 
-        var model = "LocStateId=" + sourceLocStateId + "&EntitiesPassed=" + entitiesPassed;
+        var model = "DepartmentStateId=" + sourceDepartmentStateId + "&EntitiesPassed=" + EntitiesPassed;
         $.ajax({
             type: "POST",
-            url: basicUrl + "order/PassEntities",
+            url: RootUrl + "order/PassEntities",
             data: model,
             success: function (resultModel) {
-                debugger;
-                $("input#entityCount_" + sourceLocStateId).val("");
-                $("td#RFC_" + sourceLocStateId).html(resultModel.sourceEntitiesReadyForCollection);
-                $("td#InProgress_" + resultModel.targetLocStateId).html(resultModel.targetEntitiesInProgress);
-                $("td#Status_" + resultModel.targetLocStateId).html(resultModel.targetLocStateStatus);
+                $("input#entityCount_" + sourceDepartmentStateId).val("");
+                $("td#RFC_" + sourceDepartmentStateId).html(resultModel.sourceEntitiesRFC);
+                $("td#InProgress_" + resultModel.targetDepartmentStateId).html(resultModel.targetEntitiesInProgress);
+                $("td#Status_" + resultModel.targetDepartmentStateId).html(resultModel.targetDepartmentStateStatus);
+                $("td#StartTime_" + resultModel.targetDepartmentStateId).html(resultModel.startTime);
             }
         });
-
     }
 
 </script>

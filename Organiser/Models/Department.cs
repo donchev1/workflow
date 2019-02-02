@@ -5,11 +5,10 @@ using System.Threading.Tasks;
 
 namespace Organiser.Models
 {
-    public class UserRole
+    public class Department
     {
-        public int UserRoleId { get; set; }
-        public int Role { get; set; }
+        public int DepartmentId { get; set; }
+        public string Name { get; set; }
         public int UserId { get; set; }
-        public User User { get; set; }
     }
 }

@@ -7,7 +7,7 @@
 
 <br /><br />
 
-<h1>@Model.LocationName</h1>
+<h2>@Model.LocationName</h2>
 
 @if (Model.OrderList != null && Model.OrderList.Count > 0)
 {
@@ -38,17 +38,17 @@
                 <td>@order.OrderNumber</td>
                 <td>@order.EntityType</td>
                 <td>@order.EntityCount</td>
-                <td>@order.LocStates[0].EntitiesReadyForCollection</td>
-                <td id="entitiesInProgress_@order.OrderId">@order.LocStates[0].EntitiesInProgress</td>
+                <td>@order.DepartmentStates[0].EntitiesRFC</td>
+                <td id="entitiesInProgress_@order.OrderId">@order.DepartmentStates[0].EntitiesInProgress</td>
                 <td>
-                    <input id="entitiesReady_@order.OrderId" min="1" max="@order.LocStates[0].EntitiesInProgress" type="number" size="5" />
+                    <input id="entitiesReady_@order.OrderId" min="1" max="@order.DepartmentStates[0].EntitiesInProgress" type="number" size="5" />
                 </td>
                 <td>
-                    <input class="btn btn-primary" type="button" value="Mark as Ready" onclick="markAsReady('@order.LocStates[0].Name', '@order.OrderId', '@order.LocStates[0].EntitiesInProgress', '@order.LocStates[0].LocStateId')" />
+                    <input class="btn btn-primary" type="button" value="Mark as Ready" onclick="markAsReady('@order.DepartmentStates[0].Name', '@order.OrderId', '@order.DepartmentStates[0].EntitiesInProgress', '@order.DepartmentStates[0].DepartmentStateId')" />
 
                 </td>
                 <td>
-                        <a class="btn btn-primary" href="/order/Details/@order.OrderId">Details</a>
+                    <a class="btn btn-primary" href="/order/Details/@order.OrderId">Details</a>
                 </td>
             </tr>
         }
@@ -71,44 +71,44 @@ else
 }
 
 <script>
-     setInterval(function () {
-        $.ajax({
+
+    setInterval(function () {
+    $.ajax({
         type: "POST",
-        url: basicUrl + "Messages/CheckForNewMessages?locStateId=@Model.LocationNameNum",
+        url: RootUrl + "Messages/CheckForNewMessages?DepartmentStateId=@Model.LocationNameNum",
         success: function (result) {
-            if (result) {
-                var newMessagesIcon = $("div[class$='newMessages']");
-                newMessagesIcon.css('display', 'inline-block');
-            }
+        if (result) {
+        var newMessagesIcon = $("div[class$='newMessages']");
+        newMessagesIcon.css('display', 'inline-block');
         }
-    });
-    }, 10000);
+        }
+        });
+        }, 10000);
 
-    function markAsReady(locStateName, orderId, entitiesInProgress, locStateId) {
-        entitiesPassed = parseInt($("#entitiesReady_" + orderId).val());
+        function markAsReady(DepartmentStateName, orderId, entitiesInProgress, DepartmentStateId) {
+            EntitiesPassed = parseInt($("#entitiesReady_" + orderId).val());
 
-        if (isNaN(entitiesPassed) || entitiesPassed === "" || entitiesPassed < 1) {
+            if (isNaN(EntitiesPassed) || EntitiesPassed === "" || EntitiesPassed < 1) {
             alert("Please select valid number!");
             return false;
-        }
+            }
 
-        if (entitiesPassed > parseInt(entitiesInProgress)) {
-            alert("The maximum amount of entities you can pick up is " + entitiesInProgress);
+            if (EntitiesPassed > parseInt(entitiesInProgress)) {
+            alert("The maximum amount of entities you can mark as ready is " + entitiesInProgress);
             return false;
-        }
+            }
 
-        var model = "LocStateId=" + locStateId + "&EntitiesPassed=" + entitiesPassed;
+            var model = "DepartmentStateId=" + DepartmentStateId + "&EntitiesPassed=" + EntitiesPassed;
 
-         $.ajax({
+            $.ajax({
             type: "POST",
-            url: basicUrl + "LocState/MarkAsReady",
+            url: RootUrl + "DepartmentState/MarkAsReady",
             data: model,
             success: function (result) {
-                window.location = basicUrl + "LocState/MyWork?locStateId=" + @Model.LocationNameNum + "&errorType=" + result["MessageType"] + "&message=" + result["Message"];
+                window.location = RootUrl + "DepartmentState/MyWork?DepartmentStateId=" + @Model.LocationNameNum + "&errorType=" + result["MessageType"] + "&message=" + result["Message"];
             }
-        });
+            });
 
     }
 
 </script>
-

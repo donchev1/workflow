@@ -9,6 +9,7 @@ namespace Organiser.ViewModels
 {
     public class LoginViewModel
     {
+
         [Required]
         public string UserName { get; set; }
         [Required]

@@ -19,6 +19,11 @@
             <span asp-validation-for="OrderNumber" class="text-danger centralised"></span>
         </div>
         <div class="form-group">
+            <label asp-for="Customer" class="control-label centralised"></label>
+            <input asp-for="Customer" class="form-control centralised" />
+            <span asp-validation-for="Customer" class="text-danger centralised"></span>
+        </div>
+        <div class="form-group">
             <label asp-for="EntityType" class="control-label centralised"></label>
 
             <input asp-for="EntityType" class="form-control centralised" />
@@ -37,12 +42,12 @@
         </div>
         @{string locname;}
         @for (int i = 0; i < 7; i++)
-    {
-        <p class="bold">Department @(i + 1)</p>
-    locname = "locname" + i.ToString();
-    <select name="@locname" class="form-control centralised"
-            asp-items='@(List<SelectListItem>)TempData["Locations"]'></select>
-}
+        {
+            <p class="bold">Department @(i + 1)</p>
+            locname = "locname" + i.ToString();
+            <select name="@locname" class="form-control centralised"
+                    asp-items='@(List<SelectListItem>)TempData["Locations"]'></select>
+        }
     </div>
 
 </form>

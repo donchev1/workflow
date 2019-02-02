@@ -22,19 +22,19 @@ namespace Organiser.Models
             switch (location)
             { 
                 case 1:
-                return monitor.Folirane;
+                return monitor.Folirung;
                 case 2:
-                    return monitor.ManualWork;
+                    return monitor.Handarbeit;
                 case 3:
-                    return monitor.InkChet;
+                    return monitor.Inkchet;
                 case 4:
-                    return monitor.Falcing;
+                    return monitor.Falcen;
                 case 5:
-                    return monitor.Kovertirane;
+                    return monitor.Covertirung;
                 case 6:
-                    return monitor.Sklad;
+                    return monitor.Lager;
                 case 7:
-                    return monitor.Drivers;
+                    return monitor.Fahrer;
                 default:
             return false;
             }
@@ -57,25 +57,25 @@ namespace Organiser.Models
             switch (location)
             {
                 case 1:
-                    monitor.Folirane = hasNewMessages;
+                    monitor.Folirung = hasNewMessages;
                     break;
                 case 2:
-                     monitor.ManualWork = hasNewMessages;
+                     monitor.Handarbeit = hasNewMessages;
                     break;
                 case 3:
-                    monitor.InkChet = hasNewMessages;
+                    monitor.Inkchet = hasNewMessages;
                     break;
                 case 4:
-                    monitor.Falcing = hasNewMessages;
+                    monitor.Falcen = hasNewMessages;
                     break;
                 case 5:
-                    monitor.Kovertirane = hasNewMessages;
+                    monitor.Covertirung = hasNewMessages;
                     break;
                 case 6:
-                     monitor.Sklad = hasNewMessages;
+                     monitor.Lager = hasNewMessages;
                     break;
                 case 7:
-                     monitor.Drivers = hasNewMessages;
+                     monitor.Fahrer = hasNewMessages;
                     break;
             }
             _appDbContext.Update(monitor);

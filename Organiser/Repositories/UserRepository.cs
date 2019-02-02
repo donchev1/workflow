@@ -21,7 +21,7 @@ namespace Organiser.Models
             return _appDbContext.Users.Any(e => e.UserId == id);
         }
 
-        public IEnumerable<User> Users
+        public IEnumerable<User> GetUsers
         {
             get { return _appDbContext.Users.Include(x => x.UserRoles).ToList(); }
         }
@@ -50,6 +50,33 @@ namespace Organiser.Models
         {
             //returns an empty list if no matching id is found.
             return _appDbContext.UserRoles.Where(ur => ur.UserId == id).Select(ur => ur.Role).ToList();
+        }
+
+        public bool HasRole(string userName, int roleNum)
+        {
+            //returns an empty list if no matching id is found.
+            int userId =0;
+            User user = _appDbContext.Users.FirstOrDefault(u => u.UserName == userName);
+
+            if (user != null)
+            {
+                userId =  user.UserId;
+            }
+            else
+            {
+                return false;
+            }
+
+            List<int> userRoles = _appDbContext.UserRoles.Where(ur => ur.UserId == userId).Select(ur => ur.Role).ToList();
+            if (userRoles.Count == 0)
+            {
+                return false;
+            }
+            if (!userRoles.Contains(roleNum))
+            {
+                return false;
+            }
+            return true;
         }
 
         public bool IsAdmin(string userName)

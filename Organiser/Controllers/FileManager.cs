@@ -53,38 +53,6 @@ namespace Organiser.Controllers
 
             return View(order);
         }
-        //string file_path = "";
-        //string fileName = "";
-        //if (Directory.Exists(webRoot + "/OrderFiles/" + order.OrderId.ToString() + "/File/"))
-        //{
-        //    string[] strfiles = Directory.GetFiles(webRoot + "/OrderFiles/" + order.OrderId.ToString() + "/File/", "*.*");
-
-        //    if (strfiles.Length > 0)
-        //    {
-
-        //        for (int i = 0; i < strfiles.Length; i++)
-        //        {
-        //            fileName = Path.GetFileName(strfiles[i]);
-
-        //            string _CurrentFile = strfiles[i].ToString();
-        //            if (System.IO.File.Exists(_CurrentFile))
-        //            {
-        //                string tempFileURL = "/UserFiles/" + order.OrderId.ToString() + "/File/" + Path.GetFileName(_CurrentFile);
-        //                file_path = tempFileURL;
-        //            }
-
-        //        }
-
-        //    }
-        //}
-
-        //if (!string.IsNullOrEmpty(file_path))
-        //{
-        //    ViewBag.ImgPath = Convert.ToString(file_path);
-        //    ViewBag.FileName = Convert.ToString(fileName);
-        //}
-        //else
-        //    ViewBag.ImgPath = "/Files/default.jpg";
 
         [HttpPost]
         public async Task<IActionResult> UploadFile(IFormCollection form)

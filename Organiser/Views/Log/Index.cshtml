@@ -14,14 +14,14 @@
     <form class="inline-block" asp-controller="Log" asp-action="Index" method="get">
         <p>
             Order Number: <input type="text" name="orderNumber" />
-            <input type="submit" value="Filter" />
+            <input class="btn-primary" type="submit" value="Filter" />
         </p>
     </form>
 
     <form class="inline-block" asp-controller="Log" asp-action="Index" method="get">
         <p>
             User Name: <input type="text" name="userName" />
-            <input type="submit" value="Filter" />
+            <input class="btn-primary" type="submit" value="Filter" />
         </p>
     </form>
 </div>
@@ -49,7 +49,7 @@
                 @log.OrderNumber
             </td>
             <td colspan="6">@log.ActionRecord</td>
-            <th>@log.CreatedAt.ToString("dd/MM/yy HH:mm")</th>
+            <th>@log.CreatedAt.ToString("dd/MM/yy (HH:mm)")</th>
         </tr>
     }
 </table>
@@ -74,7 +74,7 @@
     </a><br /><br />
 
     <form class="inline-block" asp-controller="Log" asp-action="EraseLogs" method="post">
-        <p>
+        <p>Erase log older than: &nbsp;
             <input type="date" name="eraseTo" />
             <input class="btn btn-danger" type="submit" value="Erase" />
         </p>

@@ -1,0 +1,81 @@
+﻿@model Organiser.Models.Order
+
+@{
+    ViewData["Title"] = "createorder";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>createorder</h2>
+
+<h4>Order</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="createorder">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="OrderNumber" class="control-label"></label>
+                <input asp-for="OrderNumber" class="form-control" />
+                <span asp-validation-for="OrderNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EntityType" class="control-label"></label>
+                <input asp-for="EntityType" class="form-control" />
+                <span asp-validation-for="EntityType" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EntityCount" class="control-label"></label>
+                <input asp-for="EntityCount" class="form-control" />
+                <span asp-validation-for="EntityCount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EntitiesInProgress" class="control-label"></label>
+                <input asp-for="EntitiesInProgress" class="form-control" />
+                <span asp-validation-for="EntitiesInProgress" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EntitiesCompleted" class="control-label"></label>
+                <input asp-for="EntitiesCompleted" class="form-control" />
+                <span asp-validation-for="EntitiesCompleted" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EntitiesNotProcessed" class="control-label"></label>
+                <input asp-for="EntitiesNotProcessed" class="form-control" />
+                <span asp-validation-for="EntitiesNotProcessed" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Status" class="control-label"></label>
+                <input asp-for="Status" class="form-control" />
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CreatedAt" class="control-label"></label>
+                <input asp-for="CreatedAt" class="form-control" />
+                <span asp-validation-for="CreatedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="StartedAt" class="control-label"></label>
+                <input asp-for="StartedAt" class="form-control" />
+                <span asp-validation-for="StartedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FinshedAt" class="control-label"></label>
+                <input asp-for="FinshedAt" class="form-control" />
+                <span asp-validation-for="FinshedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeadLineDate" class="control-label"></label>
+                <input asp-for="DeadLineDate" class="form-control" />
+                <span asp-validation-for="DeadLineDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+

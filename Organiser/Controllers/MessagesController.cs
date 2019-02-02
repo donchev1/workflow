@@ -31,9 +31,9 @@ namespace Organiser.Controllers
         public async Task<IActionResult> Index(int id, int? page, string message = "", int messageType = 0)
         {
 
-            if (!User.IsInRole(((Locations)id).ToString()))
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(((Locations)id).ToString())))
             {
-                return Error("You don't have persmissions to view this page. Contact your administrator for more information.");
+                return RedirectToAction("Logout", "Account");
             }
 
             if (message != "")
@@ -63,14 +63,14 @@ namespace Organiser.Controllers
 
         [Authorize]
         [HttpGet]
-        public IActionResult WriteNote(int locStateId)
+        public IActionResult WriteNote(int DepartmentStateId)
         {
-            if (locStateId > 0 && locStateId < 8)
+            if (DepartmentStateId > 0 && DepartmentStateId < 8)
             {
                 return View(new Note
                 {
-                    LocationName = ((Locations)locStateId).ToString(),
-                    Location = locStateId
+                    LocationName = ((Locations)DepartmentStateId).ToString(),
+                    Location = DepartmentStateId
                 });
             }
             else
@@ -112,13 +112,13 @@ namespace Organiser.Controllers
         }
 
         [HttpPost]
-        public bool CheckForNewMessages(int locStateId)
+        public bool CheckForNewMessages(int DepartmentStateId)
         {
             if (!_noteRepository.MonitorIsCreated())
             {
                 _noteRepository.CreateMonitor();
             }
-            bool result = _noteRepository.HasNewMessages(locStateId);
+            bool result = _noteRepository.HasNewMessages(DepartmentStateId);
             return result;
         }
 

@@ -11,20 +11,7 @@ namespace Organiser.ViewModels
 {
     public class UsersCreateUpdateViewModel
     {
-        public int UserId { get; set; }
-        [Required]
-        [StringLength(30, MinimumLength = 2)]
-        public string UserName { get; set; }
-
-        [Required]
-        [DataType(DataType.Password)]
-        [StringLength(25, MinimumLength = 6)]
-        public string Password { get; set; }
-
-        [DataType(DataType.Password)]
-        [StringLength(25, MinimumLength = 6)]
-        public string ConfirmPassword { get; set; }
-        public bool IsAdmin { get; set; }
+        public User UserEntity { get; set; }
         public int Role0 { get; set; }
         public int Role1 { get; set; }
         public int Role2 { get; set; }
