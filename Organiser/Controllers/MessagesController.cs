@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using static Organiser.Controllers.HelperMethods;
-//testing git test 2 whasd
+
 namespace Organiser.Controllers
 {
     public class MessagesController : Controller

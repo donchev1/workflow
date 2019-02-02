@@ -11,7 +11,6 @@ using Organiser.Models;
 using Organiser.ViewModels;
 using static Organiser.Controllers.HelperMethods;
 
-//Git test 2
 namespace Organiser.Controllers
 {
     public class OrderController : Controller
