@@ -12,16 +12,18 @@ using System.Security.Claims;
 using static Organiser.Controllers.HelperMethods;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Organiser.Actions;
+using Organiser.Actions.ActionObjects;
 
 namespace Organiser.Controllers
 {
     public class AccountController : Controller
     {
-        public AppDbContext _appDbContext;
-        public IUserRepository _userRepository;
-        public IOrderRepository _orderRepository;
-        public ILogRepository _logRepository;
-
+        private AppDbContext _appDbContext;
+        private IUserRepository _userRepository;
+        private IOrderRepository _orderRepository;
+        private ILogRepository _logRepository;
+        private IAccountActions _accountActions;
         public AccountController(
             AppDbContext appDbContext,
             IUserRepository userRepository,
@@ -86,12 +88,9 @@ namespace Organiser.Controllers
             {
                 return View(model);
             }
-            User user = _appDbContext.Users.FirstOrDefault(u => u.UserName == model.UserName && u.Password == model.Password);
-
-            if (user != null)
+            LoginActionObject loginActionObj = _accountActions.Login(model.UserName, model.Password);
+            if (loginActionObj.UserExists)
             {
-
-                var claims = new List<Claim>
                 if (model.RememberMe)
                 {
                     await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, loginActionObj.ClaimsObject,
