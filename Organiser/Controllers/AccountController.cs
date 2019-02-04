@@ -26,12 +26,14 @@ namespace Organiser.Controllers
             AppDbContext appDbContext,
             IUserRepository userRepository,
             IOrderRepository orderRepository,
-            ILogRepository logRepository)
+            ILogRepository logRepository,
+            IAccountActions accountActions)
         {
             _appDbContext = appDbContext;
             _userRepository = userRepository;
             _orderRepository = orderRepository;
             _logRepository = logRepository;
+            _accountActions = accountActions;
         }
 
         [Authorize]
@@ -90,44 +92,23 @@ namespace Organiser.Controllers
             {
 
                 var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, model.UserName),
-                };
-                foreach (int role in _userRepository.GetUserRolesByUserId(user.UserId))
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, ((Locations)role).ToString()));
-                }
-
-                if (user.IsAdmin)
-                {
-                    claims.Add(new Claim(ClaimTypes.Role, "admin"));
-                }
-
-                var userIdentity = new ClaimsIdentity(claims, "login");
-                ClaimsPrincipal principal = new ClaimsPrincipal(userIdentity);
-
                 if (model.RememberMe)
                 {
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, loginActionObj.ClaimsObject,
                     new AuthenticationProperties { IsPersistent = true });
                 }
                 else
                 {
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal,
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, loginActionObj.ClaimsObject,
                     new AuthenticationProperties { IsPersistent = false });
                 }
-
-                _logRepository.CreateLog(
-                  user.UserName,
-                  "Logged in.",
-                  DateTime.Now,
-                  null);
-
                 return RedirectToAction("Index", "Order");
             }
+
             ViewBag.errorMessage = "User name or password wrong. Please try again. *";
             return View();
         }
+
 
         [Authorize]
         [HttpGet]

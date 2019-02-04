@@ -16,5 +16,6 @@ namespace Organiser.Models
         User GetUserAndRolesById(int UserId);
         List<int> GetUserRolesByUserName(string name);
         bool HasRole(string userName, int roleNum);
+        User GetUserByNameAndPassword(string userName, string password);
     }
 }

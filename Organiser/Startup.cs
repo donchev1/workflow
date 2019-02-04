@@ -11,6 +11,8 @@ using Organiser.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Organiser.Actions;
+using Organiser.Services;
 
 namespace Organiser
 {
@@ -45,6 +47,9 @@ namespace Organiser
             services.AddTransient<IDepartmentStateRepository, DepartmentStateRepository>();
             services.AddTransient<INoteRepository, NoteRepository>();
             services.AddTransient<ILogRepository, LogRepository>();
+            services.AddTransient<IAccountActions, AccountActions>();
+            services.AddTransient<IAccountService, AccountService>();
+
             services.Configure<IISOptions>(options =>
             {
                 options.ForwardClientCertificate = false;
