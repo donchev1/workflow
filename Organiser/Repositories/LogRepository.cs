@@ -52,7 +52,6 @@ namespace Organiser.Models
             };
 
             _appDbContext.Add(newLog);
-            _appDbContext.SaveChanges();
         }
 
         public void EraseLogsOlderThanDate(DateTime date)

@@ -36,6 +36,11 @@ namespace Organiser.Models
             //returns null if it doesn't find any users
             return _appDbContext.Users.FirstOrDefault(u => u.UserName == userName);
         }
+        public User GetUserByNameAndPassword(string userName, string password)
+        {
+            //returns null if it doesn't find any users
+            return _appDbContext.Users.FirstOrDefault(u => u.UserName == userName && u.Password == password);
+        }
 
         public List<int> GetUserRolesByUserName(string name)
         {
