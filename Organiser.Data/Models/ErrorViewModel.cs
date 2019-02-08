@@ -1,6 +1,4 @@
-using System;
-
-namespace Organiser.Models
+namespace Organiser.Data.Models
 {
     public class ErrorViewModel
     {

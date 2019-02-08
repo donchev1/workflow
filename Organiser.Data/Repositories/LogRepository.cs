@@ -1,10 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Threading.Tasks;
+using Organiser.Data.Models;
 
-namespace Organiser.Models
+namespace Organiser.Data.Repositories
 {
     public class LogRepository : ILogRepository
     {

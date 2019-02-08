@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using Organiser.Data.Models;
 
-namespace Organiser.Models
+namespace Organiser.Data.Repositories
 {
     public interface IUserRepository
     {

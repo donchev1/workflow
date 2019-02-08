@@ -1,10 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Organiser.Data.Models;
 
-namespace Organiser.Models
+namespace Organiser.Data.Repositories
 {
     public class DepartmentStateRepository : IDepartmentStateRepository
     {

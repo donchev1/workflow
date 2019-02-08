@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Organiser;
-using System.IO;
 
-
-namespace AspNetCoreDotNetCore2App
+namespace Organiser
 {
     public class Program
     {
