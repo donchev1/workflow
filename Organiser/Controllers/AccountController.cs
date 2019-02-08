@@ -117,7 +117,6 @@ namespace Organiser.Controllers
             //TODO restrict to admin
             UsersCreateUpdateViewModel model = new UsersCreateUpdateViewModel();
             model.RoleDropDown = RoleDefaults();
-            model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>());
             model.Roles = Enumerable.Range(0, model.RoleDropDowns.Count).Select(x=> 0).ToList();
 
             if (User.IsInRole("admin"))
