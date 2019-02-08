@@ -118,7 +118,7 @@ namespace Organiser.Controllers
             UsersCreateUpdateViewModel model = new UsersCreateUpdateViewModel();
             model.RoleDropDown = RoleDefaults();
             model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>());
-            model.Roles = Enumerable.Range(0, model.RoleDropDowns.Count).ToDictionary(x => x, x=>x);
+            model.Roles = Enumerable.Range(0, model.RoleDropDowns.Count).Select(x=> 0).ToList();
 
             if (User.IsInRole("admin"))
             {
@@ -161,7 +161,7 @@ namespace Organiser.Controllers
             }
             try
             {
-                List<int> roleList = model.Roles.Select(x => x.Value).Where(x => x != 0).Distinct().ToList();
+                List<int> roleList = model.Roles.Where(x => x != 0).Distinct().ToList();
                 User user = new User();
                 BuildUserEntity(model, ref user);
 
@@ -177,7 +177,7 @@ namespace Organiser.Controllers
                   "Created a user. With user name: [" + user.UserName + "].",
                   DateTime.Now,
                   null);
-
+                @TempData["success"] = "User created.";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)

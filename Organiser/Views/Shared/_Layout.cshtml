@@ -205,17 +205,20 @@
         {
             <br />
         }
-        <div class="text-align-center">
-            <p class="successMessage">
-                @ViewBag.successMessage
-            </p>
-            <p class="successMessage">
-                @TempData["success"]
-            </p>
-            <p class="errorMessage">
-                @ViewBag.errorMessage
-            </p>
-        </div>
+            <div class="text-align-center">
+                <p class="successMessage">
+                    @ViewBag.successMessage
+                </p>
+                <p class="successMessage">
+                    @TempData["success"]
+                </p>
+                <p class="errorMessage">
+                    @ViewBag.errorMessage
+                </p>
+                <p class="errorMessage">
+                    @TempData["error"]
+                </p>
+            </div>
         @RenderBody()
 
     </div>

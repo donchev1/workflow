@@ -21,7 +21,7 @@ namespace Organiser.ViewModels
         public int Role7 { get; set; }
 
         public User UserEntity { get; set; }
-        public Dictionary<int, int> Roles { get; set; }
+        public List<int> Roles { get; set; }
         public List<SelectListItem> RoleDropDown { get ;set;}
         public List<List<SelectListItem>> RoleDropDowns = new List<List<SelectListItem>>();
 
