@@ -142,30 +142,26 @@ namespace Organiser.Controllers
 
             if (!ModelState.IsValid)
             {
-                model.RoleDropDowns = RoleDropdownsWithSelectedRoles(roleOrganiser(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
-                model.Role4, model.Role5, model.Role6 }));
+                model.RoleDropDown = RoleDefaults();
                 return View(model);
             }
 
-            List<int> roleList = roleOrganiser(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
-                model.Role4, model.Role5, model.Role6 });
 
             if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
             {
-                model.RoleDropDowns = RoleDropdownsWithSelectedRoles(roleOrganiser(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
-                model.Role4, model.Role5, model.Role6 }));
+                model.RoleDropDown = RoleDefaults();
                 ViewBag.errorMessage = "Password and Confirm Password fields must match!";
                 return View(model);
             }
             else if (_userRepository.GetUserByName(model.UserEntity.UserName) != null)
             {
-                model.RoleDropDowns = RoleDropdownsWithSelectedRoles(roleOrganiser(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
-                model.Role4, model.Role5, model.Role6 }));
+                model.RoleDropDown = RoleDefaults();
                 ViewBag.errorMessage = "A user with the same user name already exists!";
                 return View(model);
             }
             try
             {
+                List<int> roleList = model.Roles.Select(x => x.Value).Where(x => x != 0).Distinct().ToList();
                 User user = new User();
                 BuildUserEntity(model, ref user);
 
@@ -186,7 +182,6 @@ namespace Organiser.Controllers
             }
             catch (Exception ex)
             {
-
                 ViewBag.ErrorMessage = ex;
                 return View("Error");
             }
