@@ -11,15 +11,6 @@ namespace Organiser.ViewModels
 {
     public class UsersCreateUpdateViewModel
     {
-        public int Role0 { get; set; }
-        public int Role1 { get; set; }
-        public int Role2 { get; set; }
-        public int Role3 { get; set; }
-        public int Role4 { get; set; }
-        public int Role5 { get; set; }
-        public int Role6 { get; set; }
-        public int Role7 { get; set; }
-
         public User UserEntity { get; set; }
         public List<int> Roles { get; set; }
         public List<SelectListItem> RoleDropDown { get ;set;}

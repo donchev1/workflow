@@ -117,7 +117,7 @@ namespace Organiser.Controllers
             //TODO restrict to admin
             UsersCreateUpdateViewModel model = new UsersCreateUpdateViewModel();
             model.RoleDropDown = RoleDefaults();
-            model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>());
+
             model.Roles = Enumerable.Range(0, model.RoleDropDowns.Count).Select(x=> 0).ToList();
 
             if (User.IsInRole("admin"))
@@ -177,7 +177,7 @@ namespace Organiser.Controllers
                   "Created a user. With user name: [" + user.UserName + "].",
                   DateTime.Now,
                   null);
-                @TempData["success"] = "User created.";
+                TempData["success"] = "User created.";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
@@ -223,14 +223,13 @@ namespace Organiser.Controllers
             }
 
             UsersCreateUpdateViewModel model = BuildModelFromUser(user);
-            model.RoleDropDowns = RoleDropdownsWithSelectedRoles(user.UserRoles.Select(x => x.Role).ToList());
             return View(model);
         }
 
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit([Bind("UserEntity, Role0, Role1, Role2, Role3, Role4, Role5, Role6, Role7")] UsersCreateUpdateViewModel model)
+        public async Task<IActionResult> Edit([Bind("UserEntity, Roles")] UsersCreateUpdateViewModel model)
         {
             if (!UserIsAdmin())
             {
@@ -239,16 +238,14 @@ namespace Organiser.Controllers
 
             if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
             {
-                model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
-                model.Role4, model.Role5, model.Role6, model.Role7 });
+                model.RoleDropDown = RoleDefaults();
                 ViewBag.errorMessage = "Password and Confirm Password fields must match!";
                 return View(model);
             }
 
             if (!ModelState.IsValid)
             {
-                model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
-                model.Role4, model.Role5, model.Role6, model.Role7 });
+                model.RoleDropDown = RoleDefaults();
                 return View(model);
             }
 
@@ -258,8 +255,7 @@ namespace Organiser.Controllers
             }
             if (_userRepository.GetUserByName(model.UserEntity.UserName) != null && _userRepository.GetUserByName(model.UserEntity.UserName).UserId != model.UserEntity.UserId)
             {
-                model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3,
-                model.Role4, model.Role5, model.Role6, model.Role7 });
+                model.RoleDropDown = RoleDefaults();
                 ViewBag.errorMessage = "A user with username " + model.UserEntity.UserName + " already exists.";
                 return View(model);
             }
@@ -267,17 +263,17 @@ namespace Organiser.Controllers
             BuildUserEntity(model, ref user);
 
 
-            List<int> roleList = roleOrganiser(new List<int>() { model.Role0, model.Role1, model.Role2, model.Role3, model.Role4, model.Role5, model.Role6, model.Role7 });
+            List<int> roleList = model.Roles.Where(x => x != 0).Distinct().ToList();
 
             if (user.UserRoles.Count > 0)
             {
                 _appDbContext.RemoveRange(user.UserRoles);
-                await _appDbContext.SaveChangesAsync();
+               await _appDbContext.SaveChangesAsync();
             }
 
             if (roleList.Count > 0)
             {
-                user.UserRoles = CreateUserRoles(user, roleList.Distinct().ToList());
+                user.UserRoles = CreateUserRoles(user, roleList);
             }
 
             try
@@ -304,6 +300,29 @@ namespace Organiser.Controllers
                 null);
             ViewBag.successMessage = "User details have been modified.";
             return RedirectToAction("Index");
+        }
+        private void UpdateUserRoles(ref User user, List<int> updatedRoles)
+        {
+            for (int i = 0; i < updatedRoles.Count; i++)
+            {
+                if (updatedRoles.Count-1 < i)
+                {
+                    user.UserRoles[i] = null;
+                }
+                else if(user.UserRoles[i] != null)
+                {
+                    user.UserRoles[i].Role = updatedRoles[i];
+                }
+                else
+                {
+                    user.UserRoles.Add(new UserRole
+                    {
+                        Role = updatedRoles[i],
+                        User = user
+                    });
+                }
+
+            }
         }
 
         [Authorize]
@@ -389,7 +408,7 @@ namespace Organiser.Controllers
                 return NotFound();
             }
         }
-
+        [Obsolete]
         private List<int> roleOrganiser(List<int> roleNum)
         {
             List<int> organisedList = new List<int>();
@@ -433,6 +452,9 @@ namespace Organiser.Controllers
 
         private UsersCreateUpdateViewModel BuildModelFromUser(User user)
         {
+            List<SelectListItem> _roleDefaults = RoleDefaults();
+            List<int> _roles = user.UserRoles.Select(x => x.Role).ToList();
+            _roles.AddRange(Enumerable.Range(1, _roleDefaults.Count - _roles.Count).Select(x => 0));
             return new UsersCreateUpdateViewModel()
             {
                 UserEntity = new User()
@@ -442,7 +464,9 @@ namespace Organiser.Controllers
                     Password = user.Password,
                     ConfirmPassword = user.Password,
                     IsAdmin = user.IsAdmin
-                }
+                },
+                Roles = _roles,
+                RoleDropDown = _roleDefaults
             };
         }
 
