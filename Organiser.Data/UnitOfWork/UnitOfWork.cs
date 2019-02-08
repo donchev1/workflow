@@ -14,8 +14,8 @@ namespace Organiser.Data.UnitOfWork
         }
 
         private AppDbContext _context;
-            
-        public ILogRepository LogRepository { get; }
+
+        public LogRepository LogRepository { get; }
         public IUserRepository UserRepository { get; }
         void IUnitOfWork.Dispose()
         {

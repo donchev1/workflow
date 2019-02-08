@@ -4,7 +4,7 @@ using Organiser.Data.Models;
 
 namespace Organiser.Data.Repositories
 {
-    public interface ILogRepository
+    public interface ILogRepository_Old
     {
         IQueryable<Log> GetAllLogs();
     }

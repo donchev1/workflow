@@ -8,7 +8,7 @@ namespace Organiser.Data.UnitOfWork
 {
     public interface IUnitOfWork : IDisposable
     {
-        ILogRepository LogRepository { get; }
+        LogRepository LogRepository { get; }
         IUserRepository UserRepository { get; }
 
         void Dispose();
