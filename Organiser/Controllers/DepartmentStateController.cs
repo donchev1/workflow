@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Organiser.Models;
 using Organiser.ViewModels;
+using StackExchange.Redis;
 using static Organiser.Controllers.HelperMethods;
 
 namespace Organiser.Controllers

@@ -37,4 +37,8 @@
     <None Include="Views\Log\Index.cshtml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Organiser.Data\Organiser.Data.csproj" />
+  </ItemGroup>
+
 </Project>

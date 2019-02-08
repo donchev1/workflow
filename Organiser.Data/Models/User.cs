@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Organiser.Data.Models
 {
@@ -29,8 +28,8 @@ namespace Organiser.Data.Models
         public bool IsAdmin { get; set; }
         public List<UserRole> UserRoles { get; set; }
         //public List<Log> Logs { get; set; }
-        [NotMapped]
-        public List<SelectListItem> UserRolesDropdown { get; set; }
+        //ToDo:Tino
+        //public List<SelectListItem> UserRolesDropdown { get; set; }
 
     }
 }
