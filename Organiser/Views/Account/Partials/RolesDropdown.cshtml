@@ -1,0 +1,5 @@
+﻿@model Tuple<KeyValuePair<int, int>, List<SelectListItem>>
+@Html.DropDownListFor(
+    x => x.Item1.Value,
+    new SelectList(Model.Item2, "Value", "Text"), "--Role--", new { @class = "form-control centralised" }
+)

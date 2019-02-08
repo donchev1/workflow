@@ -88,7 +88,9 @@ namespace Organiser.Controllers
             {
                 return View(model);
             }
+
             LoginActionObject loginActionObj = _accountActions.Login(model.UserName, model.Password);
+
             if (loginActionObj.UserExists)
             {
                 if (model.RememberMe)
@@ -108,14 +110,16 @@ namespace Organiser.Controllers
             return View();
         }
 
-
         [Authorize]
         [HttpGet]
         public IActionResult Create()
         {
             //TODO restrict to admin
             UsersCreateUpdateViewModel model = new UsersCreateUpdateViewModel();
+            model.RoleDropDown = RoleDefaults();
             model.RoleDropDowns = RoleDropdownsWithSelectedRoles(new List<int>());
+            model.Roles = Enumerable.Range(0, model.RoleDropDowns.Count).ToDictionary(x => x, x=>x);
+
             if (User.IsInRole("admin"))
             {
                 return View(model);
@@ -129,7 +133,7 @@ namespace Organiser.Controllers
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(
-        [Bind("UserEntity, Role0, Role1, Role2, Role3, Role4, Role5, Role6, Role7")] UsersCreateUpdateViewModel model)
+        [Bind("UserEntity, Roles")] UsersCreateUpdateViewModel model)
         {
             if (!UserIsAdmin())
             {
