@@ -16,14 +16,14 @@ namespace Organiser.Controllers
 {
     public class LogController : Controller
     {
-        public AppDbContext _appDbContext;
-        public ILogRepository _logRepository;
+        public AppDbContext_Old _appDbContext;
+        public ILogRepository_Old _logRepository;
         public IUserRepository _userRepository;
 
         public LogController(
-            AppDbContext appDbContext,
+            AppDbContext_Old appDbContext,
             IUserRepository userRepository,
-            ILogRepository logRepository)
+            ILogRepository_Old logRepository)
         {
             _appDbContext = appDbContext;
             _logRepository = logRepository;

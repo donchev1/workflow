@@ -8,9 +8,9 @@ namespace Organiser.Models
 {
     public class DepartmentStateRepository : IDepartmentStateRepository
     {
-        private readonly AppDbContext _appDbContext;
+        private readonly AppDbContext_Old _appDbContext;
 
-        public DepartmentStateRepository(AppDbContext appDbContext)
+        public DepartmentStateRepository(AppDbContext_Old appDbContext)
         {
             _appDbContext = appDbContext;
         }

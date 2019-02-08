@@ -9,9 +9,9 @@ namespace Organiser.Models
 {
     public class NoteRepository : INoteRepository
     {
-        public AppDbContext _appDbContext;
+        public AppDbContext_Old _appDbContext;
 
-        public NoteRepository(AppDbContext appDbContext)
+        public NoteRepository(AppDbContext_Old appDbContext)
         {
             _appDbContext = appDbContext;
         }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Organiser.Actions;
 using Organiser.Services;
+using Organiser.Data;
+using Organiser.Data.UnitOfWork;
 
 namespace Organiser
 {
@@ -30,7 +28,7 @@ namespace Organiser
         {
            var connection = Configuration.GetSection("ConnectionStrings").GetSection("OrganiserData").Value;
 
-            services.AddDbContext<AppDbContext>(options =>
+            services.AddDbContext<AppDbContext_Old>(options =>
                 options.UseSqlServer(connection));
             services.AddAuthentication(o =>
             {
@@ -46,9 +44,10 @@ namespace Organiser
             services.AddTransient<IUserRepository, UserRepository>();
             services.AddTransient<IDepartmentStateRepository, DepartmentStateRepository>();
             services.AddTransient<INoteRepository, NoteRepository>();
-            services.AddTransient<ILogRepository, LogRepository>();
+            services.AddTransient<ILogRepository_Old, LogRepository>();
             services.AddTransient<IAccountActions, AccountActions>();
             services.AddTransient<IAccountService, AccountService>();
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             services.Configure<IISOptions>(options =>
             {

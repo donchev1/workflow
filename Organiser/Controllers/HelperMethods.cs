@@ -10,8 +10,8 @@ using Microsoft.AspNetCore.Http;
 
 namespace Organiser.Controllers
 {
-    public enum Statuses { NotStarted = 1, InProgress = 2, Finished = 3 }
-    public enum Locations
+    public enum Statuses_Old { NotStarted = 1, InProgress = 2, Finished = 3 }
+    public enum Locations_Old
     {
         Folirung = 1,
         Handarbeit = 2,
@@ -75,14 +75,14 @@ namespace Organiser.Controllers
             return new List<SelectListItem>
             {
                 new SelectListItem { Selected = true, Text = "- - Select - -", Value = "0"},
-                new SelectListItem { Selected = false, Text = ((Locations)1).ToString(), Value = "1"},
-                new SelectListItem { Selected = false, Text = ((Locations)2).ToString(), Value = "2"},
-                new SelectListItem { Selected = false, Text = ((Locations)3).ToString(), Value = "3"},
-                new SelectListItem { Selected = false, Text = ((Locations)4).ToString(), Value = "4"},
-                new SelectListItem { Selected = false, Text = ((Locations)5).ToString(), Value = "5"},
-                new SelectListItem { Selected = false, Text = ((Locations)6).ToString(), Value = "6"},
-                new SelectListItem { Selected = false, Text = ((Locations)7).ToString(), Value = "7"},
-                new SelectListItem { Selected = false, Text = ((Locations)8).ToString(), Value = "8"}
+                new SelectListItem { Selected = false, Text = ((Locations_Old)1).ToString(), Value = "1"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)2).ToString(), Value = "2"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)3).ToString(), Value = "3"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)4).ToString(), Value = "4"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)5).ToString(), Value = "5"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)6).ToString(), Value = "6"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)7).ToString(), Value = "7"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)8).ToString(), Value = "8"}
             };
         }
         public static List<SelectListItem> LocationDefaults()
@@ -90,13 +90,13 @@ namespace Organiser.Controllers
             return new List<SelectListItem>
             {
                 new SelectListItem { Selected = true, Text = "- - Select - -", Value = "0"},
-                new SelectListItem { Selected = false, Text = ((Locations)1).ToString(), Value = "1"},
-                new SelectListItem { Selected = false, Text = ((Locations)2).ToString(), Value = "2"},
-                new SelectListItem { Selected = false, Text = ((Locations)3).ToString(), Value = "3"},
-                new SelectListItem { Selected = false, Text = ((Locations)4).ToString(), Value = "4"},
-                new SelectListItem { Selected = false, Text = ((Locations)5).ToString(), Value = "5"},
-                new SelectListItem { Selected = false, Text = ((Locations)6).ToString(), Value = "6"},
-                new SelectListItem { Selected = false, Text = ((Locations)7).ToString(), Value = "7"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)1).ToString(), Value = "1"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)2).ToString(), Value = "2"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)3).ToString(), Value = "3"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)4).ToString(), Value = "4"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)5).ToString(), Value = "5"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)6).ToString(), Value = "6"},
+                new SelectListItem { Selected = false, Text = ((Locations_Old)7).ToString(), Value = "7"},
             };
         }
 
@@ -106,17 +106,17 @@ namespace Organiser.Controllers
             {
                 return new List<SelectListItem>
                 {
-                    new SelectListItem { Selected = selectedStatus == 1, Text = ((Statuses)1).ToString(), Value = ((Statuses)1).ToString()},
-                    new SelectListItem { Selected = selectedStatus == 2, Text = ((Statuses)2).ToString(), Value = ((Statuses)2).ToString()},
-                    new SelectListItem { Selected = selectedStatus == 3, Text = ((Statuses)3).ToString(), Value = ((Statuses)3).ToString()}
+                    new SelectListItem { Selected = selectedStatus == 1, Text = ((Statuses_Old)1).ToString(), Value = ((Statuses_Old)1).ToString()},
+                    new SelectListItem { Selected = selectedStatus == 2, Text = ((Statuses_Old)2).ToString(), Value = ((Statuses_Old)2).ToString()},
+                    new SelectListItem { Selected = selectedStatus == 3, Text = ((Statuses_Old)3).ToString(), Value = ((Statuses_Old)3).ToString()}
                 };
             }
 
             return new List<SelectListItem>
             {
-                new SelectListItem { Selected = false, Text = ((Statuses)1).ToString(), Value = ((Statuses)1).ToString()},
-                new SelectListItem { Selected = false, Text = ((Statuses)2).ToString(), Value = ((Statuses)2).ToString()},
-                new SelectListItem { Selected = false, Text = ((Statuses)3).ToString(), Value = ((Statuses)3).ToString()}
+                new SelectListItem { Selected = false, Text = ((Statuses_Old)1).ToString(), Value = ((Statuses_Old)1).ToString()},
+                new SelectListItem { Selected = false, Text = ((Statuses_Old)2).ToString(), Value = ((Statuses_Old)2).ToString()},
+                new SelectListItem { Selected = false, Text = ((Statuses_Old)3).ToString(), Value = ((Statuses_Old)3).ToString()}
             };
         }
 

@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Organiser.Data.Models;
+using Log = Organiser.Data.Models.Log;
+using User = Organiser.Data.Models.User;
 
-namespace Organiser.Models
+namespace Organiser.Data.Context
 {
     public class AppDbContext : DbContext
     {
@@ -28,16 +27,16 @@ namespace Organiser.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<UserRole>()
-           .HasOne(ur => ur.User)
-           .WithMany(u => u.UserRoles)
-           .HasForeignKey(ur => ur.UserId)
-           .HasConstraintName("ForeignKey_UserRole_User");
+                .HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserId);
+               //.HasConstraintName("ForeignKey_UserRole_User");
 
             modelBuilder.Entity<DepartmentState>()
-            .HasOne(ls => ls.Order)
-            .WithMany(ls => ls.DepartmentStates)
-            .HasForeignKey(ls => ls.OrderId)
-            .HasConstraintName("ForeignKey_DepartmentState_Order");
+                .HasOne(ls => ls.Order)
+                .WithMany(ls => ls.DepartmentStates)
+                .HasForeignKey(ls => ls.OrderId);
+                //.HasConstraintName("ForeignKey_DepartmentState_Order")
         }
       
     }

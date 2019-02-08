@@ -12,8 +12,8 @@ namespace Organiser.Repositories
 {
     public class LocationRepository : ILocationRepository
     {
-        private readonly AppDbContext _appDbContext;
-        public LocationRepository(AppDbContext appDbContext)
+        private readonly AppDbContext_Old _appDbContext;
+        public LocationRepository(AppDbContext_Old appDbContext)
         {
             _appDbContext = appDbContext;
         }

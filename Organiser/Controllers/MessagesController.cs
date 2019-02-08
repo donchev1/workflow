@@ -14,10 +14,10 @@ namespace Organiser.Controllers
     public class MessagesController : Controller
     {
         private INoteRepository _noteRepository;
-        private readonly AppDbContext _appDbContext;
+        private readonly AppDbContext_Old _appDbContext;
         private IUserRepository _userRepository;
         public MessagesController(
-            AppDbContext context,
+            AppDbContext_Old context,
             INoteRepository noteRepository,
             IUserRepository userRepository)
         {
@@ -31,7 +31,7 @@ namespace Organiser.Controllers
         public async Task<IActionResult> Index(int id, int? page, string message = "", int messageType = 0)
         {
 
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(((Locations)id).ToString())))
+            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(((Locations_Old)id).ToString())))
             {
                 return RedirectToAction("Logout", "Account");
             }
@@ -55,7 +55,7 @@ namespace Organiser.Controllers
 
             return View(new MessagesViewModel() {
                 Notes = await PaginatedList<Note>.CreateAsync(notes.AsNoTracking(), page ?? 1, pageSize),
-                LocationName = ((Locations)id).ToString(),
+                LocationName = ((Locations_Old)id).ToString(),
                 LocationNameNum = id,
                 userIsAdmin = UserIsAdmin()
             });            
@@ -69,7 +69,7 @@ namespace Organiser.Controllers
             {
                 return View(new Note
                 {
-                    LocationName = ((Locations)DepartmentStateId).ToString(),
+                    LocationName = ((Locations_Old)DepartmentStateId).ToString(),
                     Location = DepartmentStateId
                 });
             }
@@ -101,7 +101,7 @@ namespace Organiser.Controllers
 
                 _appDbContext.Add(note);
                 _appDbContext.SaveChanges();
-                note.LocationName = ((Locations)note.Location).ToString();
+                note.LocationName = ((Locations_Old)note.Location).ToString();
                 ViewBag.successMessage = "Message sent!";
                 return View(note);
             }

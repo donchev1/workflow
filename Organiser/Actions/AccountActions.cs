@@ -14,13 +14,13 @@ namespace Organiser.Actions
     public class AccountActions : IAccountActions
     {
         public IAccountService _accountService;
-        public AppDbContext _appDbContext;
+        public AppDbContext_Old _appDbContext;
         //to do - create a service for this 
-        public ILogRepository _logRepository;
+        public ILogRepository_Old _logRepository;
 
         public AccountActions(IAccountService accountService,
-            AppDbContext appDbContext,
-            ILogRepository logRepository)
+            AppDbContext_Old appDbContext,
+            ILogRepository_Old logRepository)
         {
             _accountService = accountService;
             _appDbContext = appDbContext;
@@ -42,7 +42,7 @@ namespace Organiser.Actions
 
                         foreach (int role in _accountService.GetUserRolesByUserId(user.UserId))
                         {
-                            claims.Add(new Claim(ClaimTypes.Role, ((Locations)role).ToString()));
+                            claims.Add(new Claim(ClaimTypes.Role, ((Locations_Old)role).ToString()));
                         }
 
                         if (user.IsAdmin)

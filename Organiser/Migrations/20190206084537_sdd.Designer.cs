@@ -10,7 +10,7 @@ using System;
 
 namespace Organiser.Migrations
 {
-    [DbContext(typeof(AppDbContext))]
+    [DbContext(typeof(AppDbContext_Old))]
     [Migration("20190206084537_sdd")]
     partial class sdd
     {

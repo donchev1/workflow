@@ -15,20 +15,20 @@ namespace Organiser.Controllers
 {
     public class OrderController : Controller
     {
-        public AppDbContext _appDbContext;
+        public AppDbContext_Old _appDbContext;
         public IOrderRepository _orderRepository;
         public IUserRepository _userRepository;
         public IDepartmentStateRepository _DepartmentStateRepository;
         public IHostingEnvironment _hostingEnvironment;
-        public ILogRepository _logRepository;
+        public ILogRepository_Old _logRepository;
 
         public OrderController(
             IHostingEnvironment hostingEnv,
             IOrderRepository orderList,
-            AppDbContext appDbContext,
+            AppDbContext_Old appDbContext,
             IUserRepository userRepository,
             IDepartmentStateRepository DepartmentStateRepository,
-            ILogRepository logRepository)
+            ILogRepository_Old logRepository)
         {
             _appDbContext = appDbContext;
             _orderRepository = orderList;
@@ -70,7 +70,7 @@ namespace Organiser.Controllers
             return View(new OrderStateViewModel
             {
                 LocationNameNum = locationNameNum,
-                LocationName = ((Locations)locationNameNum).ToString(),
+                LocationName = ((Locations_Old)locationNameNum).ToString(),
                 OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
             });
         }
@@ -132,7 +132,7 @@ namespace Organiser.Controllers
 
                     order.EntitiesNotProcessed = order.EntityCount;
                     order.DepartmentStates = DepartmentStateObjects;
-                    order.Status = ((Statuses)1).ToString();
+                    order.Status = ((Statuses_Old)1).ToString();
                     _appDbContext.Add(order);
                     await _appDbContext.SaveChangesAsync();
 
@@ -172,7 +172,8 @@ namespace Organiser.Controllers
             {
                 return Error("Order doesn't exist.");
             }
-            order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
+            //Tino:ToDo
+            //order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
             return View(order);
         }
 
@@ -191,7 +192,8 @@ namespace Organiser.Controllers
             if (_orderRepository.GetOrderByOrderNumber(order.OrderNumber) != null && _orderRepository.GetOrderByOrderNumber(order.OrderNumber).OrderId != order.OrderId)
             {
                 ViewBag.errorMessage = "Error: order with order number " + order.OrderNumber + " already exists.";
-                order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
+                //Tino:ToDo
+                //order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
                 return View(order);
             }
 
@@ -204,7 +206,7 @@ namespace Organiser.Controllers
                     if (order.Status != oldOrderState.Status)
                     {
                         List<DepartmentState> newDepartmentStates = oldOrderState.DepartmentStates;
-                        if (order.Status == ((Statuses)3).ToString())
+                        if (order.Status == ((Statuses_Old)3).ToString())
                         {
                             if (order.StartedAt == DateTime.MinValue)
                             {
@@ -244,7 +246,8 @@ namespace Organiser.Controllers
                 }
                 return RedirectToAction("Details", new { id = order.OrderId });
             }
-            order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
+            //Tino:ToDo
+            //order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
             return View(order);
         }
 
@@ -269,9 +272,9 @@ namespace Organiser.Controllers
                 Error("Entity count insufficient!");
             }
 
-            if (targetDepartmentState.Status == ((Statuses)1).ToString())
+            if (targetDepartmentState.Status == ((Statuses_Old)1).ToString())
             {
-                targetDepartmentState.Status = ((Statuses)2).ToString();
+                targetDepartmentState.Status = ((Statuses_Old)2).ToString();
                 targetDepartmentState.Start = DateTime.Now;
             }
 
@@ -358,7 +361,7 @@ namespace Organiser.Controllers
             List<int> allowedLocationPositions = new List<int>();
             foreach (DepartmentState ls in order.DepartmentStates)
             {
-                if (userRoles.Contains(GetLocationIntValue(ls.Name)) && ls.Status != ((Statuses)3).ToString())
+                if (userRoles.Contains(GetLocationIntValue(ls.Name)) && ls.Status != ((Statuses_Old)3).ToString())
                 {
                     allowedLocationPositions.Add(ls.LocationPosition - 1);
                 }
@@ -421,15 +424,15 @@ namespace Organiser.Controllers
             order.EntitiesNotProcessed -= model.EntitiesPassed;
             firstDepartmentState.EntitiesInProgress += model.EntitiesPassed;
             order.DepartmentStates.Add(firstDepartmentState);
-            if (firstDepartmentState.Status == ((Statuses)1).ToString())
+            if (firstDepartmentState.Status == ((Statuses_Old)1).ToString())
             {
-                firstDepartmentState.Status = ((Statuses)2).ToString();
+                firstDepartmentState.Status = ((Statuses_Old)2).ToString();
                 firstDepartmentState.Start = DateTime.Now;
             }
-            if (order.Status != ((Statuses)2).ToString())
+            if (order.Status != ((Statuses_Old)2).ToString())
             {
                 order.StartedAt = DateTime.Now;
-                order.Status = ((Statuses)2).ToString();
+                order.Status = ((Statuses_Old)2).ToString();
             }
 
             _appDbContext.Update(order);
@@ -511,9 +514,9 @@ namespace Organiser.Controllers
             {
                 orderNewDepartmentStates.Add(new DepartmentState
                 {
-                    Name = ((Locations)l).ToString(),
+                    Name = ((Locations_Old)l).ToString(),
                     LocationPosition = count + 1,
-                    Status = ((Statuses)1).ToString(),
+                    Status = ((Statuses_Old)1).ToString(),
                     TotalEntityCount = order.EntityCount
                 });
 

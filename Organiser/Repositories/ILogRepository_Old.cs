@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Organiser.Models
 {
-    public interface ILogRepository
+    public interface ILogRepository_Old
     {
         IQueryable<Log> GetActionRecordsByUserName(string userName);
         IQueryable<Log> GetAllLogs();

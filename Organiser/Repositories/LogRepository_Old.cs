@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace Organiser.Models
 {
-    public class LogRepository : ILogRepository
+    public class LogRepository : ILogRepository_Old
     {
-        private readonly AppDbContext _appDbContext;
+        private readonly AppDbContext_Old _appDbContext;
         public IUserRepository _userRepository;
         public IOrderRepository _orderRepository;
         public LogRepository(
-            AppDbContext appDbContext,
+            AppDbContext_Old appDbContext,
             IUserRepository userRepository,
             IOrderRepository orderRepository)
         {

@@ -18,19 +18,19 @@ namespace Organiser.Controllers
     [Authorize]
     public class DepartmentStateController : Controller
     {
-        private readonly AppDbContext _appDbContext;
+        private readonly AppDbContext_Old _appDbContext;
         private IOrderRepository _orderRepository;
         private IUserRepository _userRepository;
         private IDepartmentStateRepository _DepartmentStateRepository;
         private INoteRepository _noteRepository;
-        private ILogRepository _logRepository;
+        private ILogRepository_Old _logRepository;
 
-        public DepartmentStateController(AppDbContext context,
+        public DepartmentStateController(AppDbContext_Old context,
             IOrderRepository orderRepository,
             IUserRepository userRepository,
             IDepartmentStateRepository DepartmentStateRepository,
             INoteRepository noteRepository,
-            ILogRepository logRepository)
+            ILogRepository_Old logRepository)
             
         {
             _noteRepository = noteRepository;
@@ -80,7 +80,7 @@ namespace Organiser.Controllers
 
             if (DepartmentState.TotalEntityCount ==  DepartmentState.EntitiesPassed)
             {
-                DepartmentState.Status = ((Statuses)3).ToString();
+                DepartmentState.Status = ((Statuses_Old)3).ToString();
                 DepartmentState.Finish = DateTime.Now;
             }
 
@@ -92,8 +92,8 @@ namespace Organiser.Controllers
                 if (DepartmentState.EntitiesRFC == order.EntityCount)
                 {
                     order.FinshedAt = DateTime.Now;
-                    order.Status = ((Statuses)3).ToString();
-                    additionalMessage = "Order status: " + ((Statuses)3).ToString() + ".";
+                    order.Status = ((Statuses_Old)3).ToString();
+                    additionalMessage = "Order status: " + ((Statuses_Old)3).ToString() + ".";
                 }
                  _appDbContext.Update(order);
 
@@ -156,8 +156,8 @@ namespace Organiser.Controllers
             {
                 return View( new OrderStateViewModel
                 {
-                    LocationName = ((Locations)DepartmentStateId).ToString(),
-                    LocationNameNum = GetLocationIntValue(((Locations)DepartmentStateId).ToString()),
+                    LocationName = ((Locations_Old)DepartmentStateId).ToString(),
+                    LocationNameNum = GetLocationIntValue(((Locations_Old)DepartmentStateId).ToString()),
                     ShowMessages = showMessages
                 });
             }

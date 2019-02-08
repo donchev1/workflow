@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Organiser.Data.Context;
+using Organiser.Data.Models;
 
-
-namespace Organiser.Models
+namespace Organiser.Data.Repositories
 {
     public class UserRepository : IUserRepository
     {
-        public AppDbContext_Old _appDbContext;
+        public AppDbContext _appDbContext;
 
-        public UserRepository(AppDbContext_Old appDbContext)
+        public UserRepository(AppDbContext appDbContext)
         {
             _appDbContext = appDbContext;
         }

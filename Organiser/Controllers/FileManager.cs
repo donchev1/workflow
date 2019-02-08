@@ -14,16 +14,16 @@ namespace Organiser.Controllers
 {
     public class FileManagerController : Controller
     {
-        private AppDbContext _appDbContext;
+        private AppDbContext_Old _appDbContext;
         private IOrderRepository _orderRepository;
         public readonly IHostingEnvironment _hostingEnvironment;
-        public ILogRepository _logRepository;
+        public ILogRepository_Old _logRepository;
 
         public FileManagerController(
             IHostingEnvironment hostingEnvironment,
-            AppDbContext appDbContext,
+            AppDbContext_Old appDbContext,
             IOrderRepository orderRepository,
-            ILogRepository logRepository)
+            ILogRepository_Old logRepository)
         {
             _appDbContext = appDbContext;
             _orderRepository = orderRepository;

@@ -19,16 +19,16 @@ namespace Organiser.Controllers
 {
     public class AccountController : Controller
     {
-        private AppDbContext _appDbContext;
+        private AppDbContext_Old _appDbContext;
         private IUserRepository _userRepository;
         private IOrderRepository _orderRepository;
-        private ILogRepository _logRepository;
+        private ILogRepository_Old _logRepository;
         private IAccountActions _accountActions;
         public AccountController(
-            AppDbContext appDbContext,
+            AppDbContext_Old appDbContext,
             IUserRepository userRepository,
             IOrderRepository orderRepository,
-            ILogRepository logRepository,
+            ILogRepository_Old logRepository,
             IAccountActions accountActions)
         {
             _appDbContext = appDbContext;
@@ -52,7 +52,7 @@ namespace Organiser.Controllers
                     List<string> userStringRoles = new List<string>();
                     foreach (UserRole role in user.UserRoles)
                     {
-                        userStringRoles.Add(((Locations)role.Role).ToString());
+                        userStringRoles.Add(((Locations_Old)role.Role).ToString());
                     }
                     user.UserRoles = null;
                     user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
@@ -327,7 +327,7 @@ namespace Organiser.Controllers
             {
                 foreach (UserRole role in user.UserRoles)
                 {
-                    stringRolesList.Add(((Locations)role.Role).ToString());
+                    stringRolesList.Add(((Locations_Old)role.Role).ToString());
                 }
             }
 
