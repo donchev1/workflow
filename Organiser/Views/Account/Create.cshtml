@@ -3,8 +3,6 @@
 @{
     ViewData["Title"] = "Create User";
     Layout = "~/Views/Shared/_Layout.cshtml";
-    int counter = 0;
-    string locname;
 }
 <br /><br />
 
@@ -38,14 +36,11 @@
             </div>
         </div>
         <h4>Roles</h4><br />
-
-
-        @foreach (KeyValuePair<int, int> role in Model.Roles)
+        @for (int i = 0; i < Model.Roles.Count; i++)
         {
-            locname = "Roles[" + counter.ToString() + "]";
-            <select name="@locname" class="form-control centralised" asp-items='@Model.RoleDropDown'></select>
-            counter++;
+            @Html.DropDownListFor(x => x.Roles[i], new SelectList(Model.RoleDropDown, "Value", "Text"), new { @class = "form-control centralised" })
         }
+
         <br />
         <div class="form-group text-align-center">
             <input type="submit" value="Create" class="btn btn-primary" />
