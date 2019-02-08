@@ -45,13 +45,10 @@
                 </label>
             </div>
         </div>
-        @{ int counter = 0;
-            string locname; }
-        @foreach (List<SelectListItem> roleDropDown in Model.RoleDropDowns)
+      
+        @for (int i = 0; i < Model.Roles.Count; i++)
         {
-            locname = "Role" + counter.ToString();
-            <select name="@locname" class="form-control centralised" asp-items='@roleDropDown'></select>
-            counter++;
+            @Html.DropDownListFor(x => x.Roles[i], new SelectList(Model.RoleDropDown, "Value", "Text"), new { @class = "form-control centralised" })
         }
         <div class="form-group">
             <input onclick="SubmitForm()" value="Submit" class="btn btn-primary" />
