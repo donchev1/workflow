@@ -15,17 +15,17 @@ namespace Organiser.Controllers
     public class LogController : Controller
     {
         public AppDbContext _context;
+        public IUnitOfWork _unitOfWork;
 
-        public LogController( AppDbContext context)
+        public LogController( AppDbContext context, IUnitOfWork unitOfWork)
         {
             _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         [Authorize]
         public async Task<IActionResult> Index(string orderNumber, string userName, int? page, string message = "", int messageType = 0)
         {
-            using (UnitOfWork uow = new UnitOfWork(_context))
-            {
                 IQueryable<Log> Logs;
 
 
@@ -37,25 +37,25 @@ namespace Organiser.Controllers
 
                 if (orderNumber != null)
                 {
-                    Logs = uow.LogRepository.GetFilteredToIQuerable(x => x.OrderNumber == orderNumber);
+                    Logs = _unitOfWork.LogRepository.GetFilteredToIQuerable(x => x.OrderNumber == orderNumber);
                     if (Logs == null)
                     {
-                        Logs = uow.LogRepository.GetAllToIQuerable();
+                        Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
                         ViewBag.errorMessage = "There are no event records related to order with order number: " + orderNumber;
                     }
                 }
                 else if (userName != null)
                 {
-                    Logs = uow.LogRepository.GetFilteredToIQuerable(x => x.UserName == userName);
+                    Logs = _unitOfWork.LogRepository.GetFilteredToIQuerable(x => x.UserName == userName);
                     if (Logs == null)
                     {
-                        Logs = uow.LogRepository.GetAllToIQuerable();
+                        Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
                         ViewBag.errorMessage = "There are no event records related to user with user name: " + userName;
                     }
                 }
                 else
                 {
-                    Logs = uow.LogRepository.GetAllToIQuerable();
+                    Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
                 }
 
                 if (message != "")
@@ -74,7 +74,6 @@ namespace Organiser.Controllers
                 {
                     Logs = await PaginatedList<Log>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize)
                 });
-            }
         }
 
 
@@ -88,11 +87,8 @@ namespace Organiser.Controllers
             }
             if (eraseTo != DateTime.MinValue)
             {
-                using (UnitOfWork uow = new UnitOfWork(_context))
-                {
-                    uow.LogRepository.RemoveRange(x => x.CreatedAt < eraseTo );
+                    _unitOfWork.LogRepository.RemoveRange(x => x.CreatedAt < eraseTo );
                     return RedirectToAction("Index", new { message = "Log context older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
-                }
             }
             else
             {
@@ -102,12 +98,9 @@ namespace Organiser.Controllers
 
         private bool UserIsAdmin()
         {
-            using(var uow = new UnitOfWork(_context)) 
-            {
             string username = HttpContext.User.Identity.Name;
-                var user = uow.UserRepository.GetFilteredToIQuerable((x => x.UserName == username));
+                var user = _unitOfWork.UserRepository.GetFilteredToIQuerable((x => x.UserName == username));
                 return user.Select(x => x.IsAdmin == true).FirstOrDefault();
-            }
         }
 
         private IActionResult Error(string errorMessage)

@@ -7,7 +7,7 @@ namespace Organiser.Data.Context
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext>options, string connectionString) : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext>options) : base(options)
         {
         }
 

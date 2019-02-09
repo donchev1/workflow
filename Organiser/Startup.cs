@@ -52,6 +52,7 @@ namespace Organiser
             services.AddTransient<ILogRepository_Old, LogRepository>();
             services.AddTransient<IAccountActions, AccountActions>();
             services.AddTransient<IAccountService, AccountService>();
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             services.Configure<IISOptions>(options =>
             {
