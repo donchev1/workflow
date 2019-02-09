@@ -6,6 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.2.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.2.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="2.2.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
@@ -13,9 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="EntityFramework">
-      <HintPath>..\..\..\..\.nuget\packages\entityframework\6.2.0\lib\net45\EntityFramework.dll</HintPath>
-    </Reference>
+    <Folder Include="DatabaseScripts\" />
   </ItemGroup>
 
 </Project>

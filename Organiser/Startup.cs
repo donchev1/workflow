@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Organiser.Actions;
 using Organiser.Services;
 using Organiser.Data;
+using Organiser.Data.Context;
 using Organiser.Data.UnitOfWork;
 
 namespace Organiser
@@ -28,8 +29,12 @@ namespace Organiser
         {
            var connection = Configuration.GetSection("ConnectionStrings").GetSection("OrganiserData").Value;
 
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(connection));
+
             services.AddDbContext<AppDbContext_Old>(options =>
                 options.UseSqlServer(connection));
+
             services.AddAuthentication(o =>
             {
                 o.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -47,7 +52,6 @@ namespace Organiser
             services.AddTransient<ILogRepository_Old, LogRepository>();
             services.AddTransient<IAccountActions, AccountActions>();
             services.AddTransient<IAccountService, AccountService>();
-            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             services.Configure<IISOptions>(options =>
             {

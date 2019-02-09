@@ -1,12 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 using Organiser.Data.Models;
-using Log = Organiser.Data.Models.Log;
-using User = Organiser.Data.Models.User;
 
 namespace Organiser.Data.Context
 {
     public class AppDbContext : DbContext
     {
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        {
+        }
+
         public DbSet<Order> Orders { get; set; }
         public DbSet<DepartmentState> DepartmentStates { get; set; }
         public DbSet<Department> Departments { get; set; }
@@ -17,12 +21,7 @@ namespace Organiser.Data.Context
         public DbSet<NewMessagesMonitor> NewMessagesMonitor { get; set; }
         public DbSet<Log> Logs { get; set; }
 
-
-
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-        {
-
-        }
+        public IConfiguration Configuration { get; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,6 +37,6 @@ namespace Organiser.Data.Context
                 .HasForeignKey(ls => ls.OrderId);
                 //.HasConstraintName("ForeignKey_DepartmentState_Order")
         }
-      
+       
     }
 }

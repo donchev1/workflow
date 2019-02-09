@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using System.Data.Entity.Migrations;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using DbContext = Microsoft.EntityFrameworkCore.DbContext;
 
