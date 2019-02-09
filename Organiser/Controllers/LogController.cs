@@ -14,18 +14,19 @@ namespace Organiser.Controllers
 {
     public class LogController : Controller
     {
-        public AppDbContext _context;
         public IUnitOfWork _unitOfWork;
 
-        public LogController( AppDbContext context, IUnitOfWork unitOfWork)
+        public LogController( IUnitOfWork unitOfWork)
         {
-            _context = context;
             _unitOfWork = unitOfWork;
         }
 
         [Authorize]
         public async Task<IActionResult> Index(string orderNumber, string userName, int? page, string message = "", int messageType = 0)
         {
+            using (_unitOfWork)
+            {
+
                 IQueryable<Log> Logs;
 
 
@@ -74,6 +75,7 @@ namespace Organiser.Controllers
                 {
                     Logs = await PaginatedList<Log>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize)
                 });
+            }
         }
 
 
