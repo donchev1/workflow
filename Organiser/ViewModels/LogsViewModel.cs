@@ -11,7 +11,7 @@ namespace Organiser.ViewModels
 {
     public class LogsViewModel 
     {
-        public PaginatedList<Log> Logs { get; set; }
+        public PaginatedList<Log_Old> Logs { get; set; }
     }
 
 }

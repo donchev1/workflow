@@ -12,7 +12,7 @@ namespace Organiser.Models
         public DbSet<User> Users { get; set; }
         public DbSet<Note> Notes { get; set; }
         public DbSet<NewMessagesMonitor> NewMessagesMonitor { get; set; }
-        public DbSet<Log> Logs { get; set; }
+        public DbSet<Log_Old> Logs { get; set; }
 
 
 

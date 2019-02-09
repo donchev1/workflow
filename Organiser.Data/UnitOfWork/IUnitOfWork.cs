@@ -11,6 +11,5 @@ namespace Organiser.Data.UnitOfWork
         LogRepository LogRepository { get; }
         IUserRepository UserRepository { get; }
 
-        void Dispose();
     }
 }

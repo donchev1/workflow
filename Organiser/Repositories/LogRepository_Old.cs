@@ -20,21 +20,21 @@ namespace Organiser.Models
             _userRepository = userRepository;
             _orderRepository = orderRepository;
         }
-        public IQueryable<Log> GetAllLogs()
+        public IQueryable<Log_Old> GetAllLogs()
         {
             return _appDbContext.Logs
                 .OrderByDescending(l => l.CreatedAt);
 
         }
 
-        public IQueryable<Log> GetActionRecordsByOrderNumber(string orderNumber)
+        public IQueryable<Log_Old> GetActionRecordsByOrderNumber(string orderNumber)
         {
             return _appDbContext.Logs
                 .Where(l => l.OrderNumber.Contains(orderNumber))
                 .OrderByDescending(l => l.CreatedAt);
         }
 
-        public IQueryable<Log> GetActionRecordsByUserName(string userName)
+        public IQueryable<Log_Old> GetActionRecordsByUserName(string userName)
         {
             return _appDbContext.Logs
                 .Where(l => l.UserName.Contains(userName))
@@ -43,7 +43,7 @@ namespace Organiser.Models
 
         public void CreateLog(string userName, string content, DateTime timeOfAction, string orderNumber = "")
         {
-            Log newLog = new Log()
+            Log_Old newLog = new Log_Old()
             {
                 UserName = userName,
                 ActionRecord = content,

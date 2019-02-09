@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Organiser.Models
 {
-    public class Log
+    public class Log_Old
     {
         public int LogId { get; set; }
 

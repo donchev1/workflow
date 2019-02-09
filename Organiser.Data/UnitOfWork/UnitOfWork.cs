@@ -17,14 +17,10 @@ namespace Organiser.Data.UnitOfWork
 
         public LogRepository LogRepository { get; }
         public IUserRepository UserRepository { get; }
-        void IUnitOfWork.Dispose()
-        {
-            throw new NotImplementedException();
-        }
 
-        void IDisposable.Dispose()
+        public void Dispose()
         {
-            throw new NotImplementedException();
+            _context?.Dispose();
         }
     }
 }
