@@ -8,13 +8,11 @@ namespace Organiser.Data.Models
     {
         public int NoteId { get; set; }
 
-        [Column(TypeName = "ntext")]
-        [Required]
         public string Content { get; set; }
         public int Location { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Author { get; set; }
-        [NotMapped]
-        public string LocationName { get; set; }
+        //Tino:ToDo
+        //public string LocationName { get; set; }
     }
 }

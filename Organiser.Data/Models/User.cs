@@ -9,25 +9,15 @@ namespace Organiser.Data.Models
     {
         public int UserId { get; set; }
 
-        [Required]
-        [StringLength(30, MinimumLength = 2)]
-        [DisplayName("User Name")]
         public string UserName { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [StringLength(25, MinimumLength = 6)]
         public string Password { get; set; }
 
-        [NotMapped]
-        [DataType(DataType.Password)]
-        [StringLength(25, MinimumLength = 6)]
-        [DisplayName("Confirm Password")]
         public string ConfirmPassword { get; set; }
-        [DisplayName("Admin?")]
         public bool IsAdmin { get; set; }
         public List<UserRole> UserRoles { get; set; }
-        //public List<Log> Logs { get; set; }
+        public List<Log> Logs { get; set; }
+        //Tino:ToDo
         //public List<SelectListItem> UserRolesDropdown { get; set; }
 
     }

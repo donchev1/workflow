@@ -8,8 +8,6 @@ namespace Organiser.Data.Models
     {
         public int LogId { get; set; }
 
-        [Column(TypeName = "ntext")]
-        [Required]
         public string ActionRecord { get; set; }
         public DateTime CreatedAt { get; set; }
         public string OrderNumber { get; set; }
