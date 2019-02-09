@@ -16,12 +16,14 @@ namespace Organiser.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "2.2.1-servicing-10028")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
             modelBuilder.Entity("Organiser.Data.Models.Department", b =>
                 {
                     b.Property<int>("DepartmentId")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Name");
 
@@ -35,7 +37,8 @@ namespace Organiser.Data.Migrations
             modelBuilder.Entity("Organiser.Data.Models.DepartmentState", b =>
                 {
                     b.Property<int>("DepartmentStateId")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<int>("EntitiesInProgress");
 
@@ -67,7 +70,8 @@ namespace Organiser.Data.Migrations
             modelBuilder.Entity("Organiser.Data.Models.Log", b =>
                 {
                     b.Property<int>("LogId")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ActionRecord");
 
@@ -89,7 +93,8 @@ namespace Organiser.Data.Migrations
             modelBuilder.Entity("Organiser.Data.Models.NewMessagesMonitor", b =>
                 {
                     b.Property<int>("NewMessagesMonitorId")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<bool>("Covertirung");
 
@@ -113,7 +118,8 @@ namespace Organiser.Data.Migrations
             modelBuilder.Entity("Organiser.Data.Models.Note", b =>
                 {
                     b.Property<int>("NoteId")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Author");
 
@@ -131,7 +137,8 @@ namespace Organiser.Data.Migrations
             modelBuilder.Entity("Organiser.Data.Models.Order", b =>
                 {
                     b.Property<int>("OrderId")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<DateTime>("CreatedAt");
 
@@ -165,7 +172,8 @@ namespace Organiser.Data.Migrations
             modelBuilder.Entity("Organiser.Data.Models.User", b =>
                 {
                     b.Property<int>("UserId")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ConfirmPassword");
 
@@ -183,7 +191,8 @@ namespace Organiser.Data.Migrations
             modelBuilder.Entity("Organiser.Data.Models.UserRole", b =>
                 {
                     b.Property<int>("UserRoleId")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<int>("Role");
 

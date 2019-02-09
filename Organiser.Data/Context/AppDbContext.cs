@@ -7,7 +7,7 @@ namespace Organiser.Data.Context
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext>options, string connectionString) : base(options)
         {
         }
 
@@ -29,13 +29,13 @@ namespace Organiser.Data.Context
                 .HasOne(ur => ur.User)
                 .WithMany(u => u.UserRoles)
                 .HasForeignKey(ur => ur.UserId);
-               //.HasConstraintName("ForeignKey_UserRole_User");
+            //.HasConstraintName("ForeignKey_UserRole_User");
 
             modelBuilder.Entity<DepartmentState>()
                 .HasOne(ls => ls.Order)
                 .WithMany(ls => ls.DepartmentStates)
                 .HasForeignKey(ls => ls.OrderId);
-                //.HasConstraintName("ForeignKey_DepartmentState_Order")
+                //.HasConstraintName("ForeignKey_DepartmentState_Order");
         }
        
     }

@@ -1,4 +1,6 @@
-﻿namespace Organiser.Data.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Organiser.Data.Models
 {
     public class UserRole
     {

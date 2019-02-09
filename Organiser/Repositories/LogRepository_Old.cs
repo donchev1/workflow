@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Organiser.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,21 +21,21 @@ namespace Organiser.Models
             _userRepository = userRepository;
             _orderRepository = orderRepository;
         }
-        public IQueryable<Log_Old> GetAllLogs()
+        public IQueryable<Log> GetAllLogs()
         {
             return _appDbContext.Logs
                 .OrderByDescending(l => l.CreatedAt);
 
         }
 
-        public IQueryable<Log_Old> GetActionRecordsByOrderNumber(string orderNumber)
+        public IQueryable<Log> GetActionRecordsByOrderNumber(string orderNumber)
         {
             return _appDbContext.Logs
                 .Where(l => l.OrderNumber.Contains(orderNumber))
                 .OrderByDescending(l => l.CreatedAt);
         }
 
-        public IQueryable<Log_Old> GetActionRecordsByUserName(string userName)
+        public IQueryable<Log> GetActionRecordsByUserName(string userName)
         {
             return _appDbContext.Logs
                 .Where(l => l.UserName.Contains(userName))
@@ -43,7 +44,7 @@ namespace Organiser.Models
 
         public void CreateLog(string userName, string content, DateTime timeOfAction, string orderNumber = "")
         {
-            Log_Old newLog = new Log_Old()
+            Log newLog = new Log()
             {
                 UserName = userName,
                 ActionRecord = content,

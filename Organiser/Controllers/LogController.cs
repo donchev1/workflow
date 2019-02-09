@@ -26,7 +26,7 @@ namespace Organiser.Controllers
         {
             using (UnitOfWork uow = new UnitOfWork(_context))
             {
-                IQueryable<Log> Logs2;
+                IQueryable<Log> Logs;
 
 
                 int pageSize = 20;
@@ -37,25 +37,25 @@ namespace Organiser.Controllers
 
                 if (orderNumber != null)
                 {
-                    Logs2 = uow.LogRepository.GetFilteredToIQuerable(x => x.OrderNumber == orderNumber);
-                    if (Logs2 == null)
+                    Logs = uow.LogRepository.GetFilteredToIQuerable(x => x.OrderNumber == orderNumber);
+                    if (Logs == null)
                     {
-                        Logs2 = uow.LogRepository.GetAllToIQuerable();
+                        Logs = uow.LogRepository.GetAllToIQuerable();
                         ViewBag.errorMessage = "There are no event records related to order with order number: " + orderNumber;
                     }
                 }
                 else if (userName != null)
                 {
-                    Logs2 = uow.LogRepository.GetFilteredToIQuerable(x => x.UserName == userName);
-                    if (Logs2 == null)
+                    Logs = uow.LogRepository.GetFilteredToIQuerable(x => x.UserName == userName);
+                    if (Logs == null)
                     {
-                        Logs2 = uow.LogRepository.GetAllToIQuerable();
+                        Logs = uow.LogRepository.GetAllToIQuerable();
                         ViewBag.errorMessage = "There are no event records related to user with user name: " + userName;
                     }
                 }
                 else
                 {
-                    Logs2 = uow.LogRepository.GetAllToIQuerable();
+                    Logs = uow.LogRepository.GetAllToIQuerable();
                 }
 
                 if (message != "")
@@ -72,8 +72,7 @@ namespace Organiser.Controllers
 
                 return View(new LogsViewModel()
                 {
-                    //Logs = await PaginatedList<Log_Old>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize);
-                    Logs2 = await PaginatedList<Log>.CreateAsync(Logs2.AsNoTracking(), page ?? 1, pageSize)
+                    Logs = await PaginatedList<Log>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize)
                 });
             }
         }

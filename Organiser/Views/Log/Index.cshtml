@@ -1,4 +1,5 @@
-﻿@model LogsViewModel
+﻿@using Organiser.Data.Models
+@model LogsViewModel
 
 @{
     ViewData["Title"] = "Log List";
@@ -41,7 +42,7 @@
             Timestamp
         </th>
     </tr>
-    @foreach (Log_Old log in Model.Logs)
+    @foreach (Log log in Model.Logs)
     {
         <tr>
             <td>@log.UserName</td>
