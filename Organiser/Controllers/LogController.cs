@@ -14,21 +14,11 @@ namespace Organiser.Controllers
 {
     public class LogController : Controller
     {
-        public AppDbContext_Old _appDbContext;
         public AppDbContext _context;
-        public ILogRepository_Old _logRepository;
-        public IUserRepository _userRepository;
 
-        public LogController(
-        AppDbContext context,
-        AppDbContext_Old appDbContext,
-        IUserRepository userRepository,
-        ILogRepository_Old logRepository)
+        public LogController( AppDbContext context)
         {
             _context = context;
-            _appDbContext = appDbContext;
-            _logRepository = logRepository;
-            _userRepository = userRepository;
         }
 
         [Authorize]
@@ -101,8 +91,7 @@ namespace Organiser.Controllers
             {
                 using (UnitOfWork uow = new UnitOfWork(_context))
                 {
-                    _logRepository.EraseLogsOlderThanDate(eraseTo);
-                    uow.LogRepository.RemoveRange(x => x. );
+                    uow.LogRepository.RemoveRange(x => x.CreatedAt < eraseTo );
                     return RedirectToAction("Index", new { message = "Log context older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
                 }
             }
@@ -114,8 +103,12 @@ namespace Organiser.Controllers
 
         private bool UserIsAdmin()
         {
-            string UserName = HttpContext.User.Identity.Name;
-            return _userRepository.IsAdmin(UserName);
+            using(var uow = new UnitOfWork(_context)) 
+            {
+            string username = HttpContext.User.Identity.Name;
+                var user = uow.UserRepository.GetFilteredToIQuerable((x => x.UserName == username));
+                return user.Select(x => x.IsAdmin == true).FirstOrDefault();
+            }
         }
 
         private IActionResult Error(string errorMessage)

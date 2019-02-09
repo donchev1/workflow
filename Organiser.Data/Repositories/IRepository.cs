@@ -17,6 +17,7 @@ namespace Organiser.Data.Repositories
         void Add(T entity);
         void AddRange(IEnumerable<T> entitiesRange);
         void Remove(T entity);
+        void RemoveRange(Expression<Func<T, bool>> predicate);
         void RemoveRange(IEnumerable<T> entitiesRange);
         void SaveChanges();
     }

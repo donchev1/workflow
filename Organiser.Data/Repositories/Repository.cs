@@ -127,6 +127,20 @@ namespace Organiser.Data.Repositories
             }
         }
 
+        public void RemoveRange(Expression<Func<T, bool>> predicate)
+        {
+            try
+            {
+                var rangeToDelete  = Context.Set<T>().Where(predicate);
+
+                Context.Set<T>().RemoveRange(rangeToDelete);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Organiser.Data.Repositories.Repository.Remove" + e.Message);
+            }
+        }
+
         public void RemoveRange(IEnumerable<T> entitiesRange)
         {
             try
