@@ -7,7 +7,6 @@ namespace Organiser.Data.Repositories
 {
     public class LogRepository :  Repository<AppDbContext, Log>
     {
-        private AppDbContext _context;
         public LogRepository(AppDbContext context) : base(context)
         {
         }

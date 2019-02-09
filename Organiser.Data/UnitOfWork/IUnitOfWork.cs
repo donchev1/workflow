@@ -9,7 +9,7 @@ namespace Organiser.Data.UnitOfWork
     public interface IUnitOfWork : IDisposable
     {
         LogRepository LogRepository { get; }
-        IUserRepository UserRepository { get; }
+        UserRepository UserRepository { get; }
 
     }
 }

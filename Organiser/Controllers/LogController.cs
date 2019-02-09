@@ -2,13 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Organiser.Data.Context;
+using Organiser.Data.Models;
 using Organiser.Data.UnitOfWork;
 using Organiser.Models;
 using Organiser.ViewModels;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Organiser.Data.Models;
 
 namespace Organiser.Controllers
 {
@@ -34,12 +34,10 @@ namespace Organiser.Controllers
         [Authorize]
         public async Task<IActionResult> Index(string orderNumber, string userName, int? page, string message = "", int messageType = 0)
         {
-            using (var uow = new UnitOfWork(_context))
+            using (UnitOfWork uow = new UnitOfWork(_context))
             {
+                IQueryable<Log> Logs2;
 
-                IQueryable<Log_Old> Logs;
-                var Logs2 = new object();
-                
 
                 int pageSize = 20;
                 if (!UserIsAdmin())
@@ -49,26 +47,25 @@ namespace Organiser.Controllers
 
                 if (orderNumber != null)
                 {
-                    Logs = _logRepository.GetActionRecordsByOrderNumber(orderNumber);
-                    if (Logs == null)
+                    Logs2 = uow.LogRepository.GetFilteredToIQuerable(x => x.OrderNumber == orderNumber);
+                    if (Logs2 == null)
                     {
-                        Logs = _logRepository.GetAllLogs();
-                        Logs2 = uow.LogRepository.GetAllToList();
+                        Logs2 = uow.LogRepository.GetAllToIQuerable();
                         ViewBag.errorMessage = "There are no event records related to order with order number: " + orderNumber;
                     }
                 }
                 else if (userName != null)
                 {
-                    Logs = _logRepository.GetActionRecordsByUserName(userName);
-                    if (Logs == null)
+                    Logs2 = uow.LogRepository.GetFilteredToIQuerable(x => x.UserName == userName);
+                    if (Logs2 == null)
                     {
-                        Logs = _logRepository.GetAllLogs();
+                        Logs2 = uow.LogRepository.GetAllToIQuerable();
                         ViewBag.errorMessage = "There are no event records related to user with user name: " + userName;
                     }
                 }
                 else
                 {
-                    Logs = _logRepository.GetAllLogs();
+                    Logs2 = uow.LogRepository.GetAllToIQuerable();
                 }
 
                 if (message != "")
@@ -85,43 +82,47 @@ namespace Organiser.Controllers
 
                 return View(new LogsViewModel()
                 {
-                    Logs = await PaginatedList<Log_Old>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize)
+                    //Logs = await PaginatedList<Log_Old>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize);
+                    Logs2 = await PaginatedList<Log>.CreateAsync(Logs2.AsNoTracking(), page ?? 1, pageSize)
                 });
             }
-    }
-
-
-
-    [HttpPost]
-    public IActionResult EraseLogs(DateTime eraseTo)
-    {
-        if (!UserIsAdmin())
-        {
-            return Error("You need admin privileges.");
         }
-        if (eraseTo != DateTime.MinValue)
+
+
+
+        [HttpPost]
+        public IActionResult EraseLogs(DateTime eraseTo)
         {
-
-            _logRepository.EraseLogsOlderThanDate(eraseTo);
-            return RedirectToAction("Index", new { message = "Log context older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
+            if (!UserIsAdmin())
+            {
+                return Error("You need admin privileges.");
+            }
+            if (eraseTo != DateTime.MinValue)
+            {
+                using (UnitOfWork uow = new UnitOfWork(_context))
+                {
+                    _logRepository.EraseLogsOlderThanDate(eraseTo);
+                    uow.LogRepository.RemoveRange(x => x. );
+                    return RedirectToAction("Index", new { message = "Log context older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
+                }
+            }
+            else
+            {
+                return RedirectToAction("Index", new { message = "Please select a date first.", messageType = 1 });
+            }
         }
-        else
+
+        private bool UserIsAdmin()
         {
-            return RedirectToAction("Index", new { message = "Please select a date first.", messageType = 1 });
+            string UserName = HttpContext.User.Identity.Name;
+            return _userRepository.IsAdmin(UserName);
+        }
+
+        private IActionResult Error(string errorMessage)
+        {
+            ViewBag.ErrorMessage = errorMessage;
+            return View("Error");
         }
     }
-
-    private bool UserIsAdmin()
-    {
-        string UserName = HttpContext.User.Identity.Name;
-        return _userRepository.IsAdmin(UserName);
-    }
-
-    private IActionResult Error(string errorMessage)
-    {
-        ViewBag.ErrorMessage = errorMessage;
-        return View("Error");
-    }
-}
 
 }

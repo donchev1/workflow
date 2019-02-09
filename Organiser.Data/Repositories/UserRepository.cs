@@ -7,13 +7,17 @@ using Organiser.Data.Models;
 
 namespace Organiser.Data.Repositories
 {
-    public class UserRepository : IUserRepository
+    public class UserRepository : Repository<AppDbContext, User>
     {
         public AppDbContext _appDbContext;
 
-        public UserRepository(AppDbContext appDbContext)
+        //public UserRepository(AppDbContext appDbContext)
+        //{
+        //    _appDbContext = appDbContext;
+        //}
+
+        public UserRepository(AppDbContext context) : base(context)
         {
-            _appDbContext = appDbContext;
         }
 
         public bool UserExists(int id)

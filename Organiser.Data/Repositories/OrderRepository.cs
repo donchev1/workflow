@@ -6,13 +6,17 @@ using Organiser.Data.Models;
 
 namespace Organiser.Data.Repositories
 {
-    public class OrderRepository : IOrderRepository
+    public class OrderRepository :  Repository<AppDbContext, Order>
     {
         private readonly AppDbContext _appDbContext;
 
-        public OrderRepository(AppDbContext appDbContext)
+        //public OrderRepository(AppDbContext appDbContext)
+        //{
+        //    _appDbContext = appDbContext;
+        //}
+
+        public OrderRepository(AppDbContext context) : base(context)
         {
-            _appDbContext = appDbContext;
         }
         public bool OrderExists(int id)
         {
