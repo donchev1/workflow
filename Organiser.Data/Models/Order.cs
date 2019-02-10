@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Organiser.Data.Models
 {
@@ -31,8 +32,7 @@ namespace Organiser.Data.Models
         public List<DepartmentState> DepartmentStates { get; set; }
         public string Customer { get; set; }
 
-        //Tino:ToDo
-        //public List<SelectListItem> StatusDefaultsDropdown { get; set; }
+        public List<SelectListItem> StatusDefaultsDropdown { get; set; }
 
     }
 }

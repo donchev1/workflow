@@ -20,5 +20,6 @@ namespace Organiser.Data.Repositories
         void RemoveRange(Expression<Func<T, bool>> predicate);
         void RemoveRange(IEnumerable<T> entitiesRange);
         void SaveChanges();
+        Task SaveChangesAsync();
     }
 }

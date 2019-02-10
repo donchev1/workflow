@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using DbContext = Microsoft.EntityFrameworkCore.DbContext;
 
 namespace Organiser.Data.Repositories
@@ -166,6 +167,18 @@ namespace Organiser.Data.Repositories
             {
                 throw new Exception("Organiser.Data.Repositories.Repository.SaveChanges" + e.Message);
             }
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            try
+            {
+                 await Context.SaveChangesAsync();
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Organiser.Data.Repositories.Repository.SaveChangesAsync" + e.Message);
+            };
         }
     }
 }

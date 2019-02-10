@@ -10,6 +10,18 @@ namespace Organiser.Data.Repositories
         public LogRepository(AppDbContext context) : base(context)
         {
         }
+
+        public void CreateLog(string userName, string content, DateTime timeOfAction, string orderNumber = "")
+        {
+            Log newLog = new Log()
+            {
+                UserName = userName,
+                ActionRecord = content,
+                CreatedAt = timeOfAction,
+                OrderNumber = orderNumber
+            };
+
+        }
     }
 
 }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Organiser.Data.EnumType
 {
-    public class EnumType
+    public class Enums
     {
         public enum Statuses { NotStarted = 1, InProgress = 2, Finished = 3 }
         public enum Locations

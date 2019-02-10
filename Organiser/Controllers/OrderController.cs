@@ -2,88 +2,90 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.SqlServer;
+using Organiser.Data.EnumType;
+using Organiser.Data.Models;
 using Organiser.Data.UnitOfWork;
-using Organiser.Models;
 using Organiser.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Remotion.Linq.Parsing.Structure.IntermediateModel;
 using static Organiser.Controllers.HelperMethods;
 
 namespace Organiser.Controllers
 {
     public class OrderController : Controller
     {
-        public AppDbContext_Old _appDbContext;
-        public IOrderRepository _orderRepository;
-        public IUserRepository _userRepository;
-        public IDepartmentStateRepository _DepartmentStateRepository;
         public IHostingEnvironment _hostingEnvironment;
-        public ILogRepository_Old _logRepository;
         public IUnitOfWork _unitOfWork;
 
-        public OrderController(
-            IHostingEnvironment hostingEnv,
-            IOrderRepository orderList,
-            AppDbContext_Old appDbContext,
-            IUserRepository userRepository,
-            IDepartmentStateRepository DepartmentStateRepository,
-            ILogRepository_Old logRepository,
-            IUnitOfWork unitOfWork)
+        public OrderController(IHostingEnvironment hostingEnv, IUnitOfWork unitOfWork)
         {
-            _appDbContext = appDbContext;
-            _orderRepository = orderList;
-            _userRepository = userRepository;
-            _DepartmentStateRepository = DepartmentStateRepository;
             _hostingEnvironment = hostingEnv;
-            _logRepository = logRepository;
             _unitOfWork = unitOfWork;
         }
 
         [Authorize]
         public async Task<IActionResult> Index(int? page, string SearchID = "")
         {
-            IQueryable<Order> orders;
-            int pageSize = 15;
-
-            if (SearchID != "" && SearchID != null)
+            using (_unitOfWork)
             {
-                orders = _orderRepository.GetOrdersAndDepartmentStatesBySearchId(SearchID);
-                IOrderedQueryable<Data.Models.Order> orders2 = _unitOfWork.OrderRepository.Find(o => o
+                IQueryable<Order> orders;
+                int pageSize = 15;
+
+                if (SearchID != "" && SearchID != null)
+                {
+
+                    orders = _unitOfWork.OrderRepository.Find(o => o
                         .OrderNumber
                         .Contains(SearchID))
                     .Include(or => or.DepartmentStates)
                     .OrderByDescending(l => l.CreatedAt);
 
+                    return View(new OrderStateViewModel
+                    {
+                        OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize),
+                    });
+                }
+
+                orders = _unitOfWork.OrderRepository.GetAllToIQuerable().Include(x => x.DepartmentStates)
+                   .OrderByDescending(x => x.CreatedAt);
+
                 return View(new OrderStateViewModel
                 {
-                    OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize),
+                    OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
                 });
             }
-
-            orders = _orderRepository.OrdersAndDepartmentStates();
-
-            return View(new OrderStateViewModel
-            {
-                OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
-            });
         }
 
         public async Task<IActionResult> AvailableWork(int locationNameNum, int? page)
         {
-            int pageSize = 15;
-
-            IQueryable<Order> orders = _orderRepository.GetAvailableOrdersForWork(locationNameNum);
-            return View(new OrderStateViewModel
+            using (_unitOfWork)
             {
-                LocationNameNum = locationNameNum,
-                LocationName = ((Locations_Old)locationNameNum).ToString(),
-                OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
-            });
+                int pageSize = 15;
+
+                //ToDo:Tino
+                IQueryable<Order> orders2 = _unitOfWork.OrderRepository.GetAvailableOrdersForWork(locationNameNum);
+                IQueryable<Order> orders = _unitOfWork.OrderRepository.Context.Orders.Where(o => o.Status == (StatusType.InProgress) || o.EntitiesNotProcessed > 0)
+                    .Include(o => o.DepartmentStates)
+                    .Where(o => (o.DepartmentStates.Any(ls =>
+                                     ls.Name == ((Data.EnumType.Enums.Locations)locationNameNum).ToString() &&
+                                     o.EntitiesNotProcessed > 0 && o.DepartmentStates.Any(ls1 =>
+                                         ls1.Name == ((Enums.Locations)locationNameNum).ToString() &&
+                                         ls1.LocationPosition == 1))
+                                 || o.DepartmentStates.Any(beforeLS =>
+                                     beforeLS.LocationPosition == o.DepartmentStates.FirstOrDefault(originalLS =>
+                                             originalLS.Name == ((Enums.Locations)locationNameNum).ToString())
+                                         .LocationPosition - 1 && beforeLS.EntitiesRFC > 0)));
+                return View(new OrderStateViewModel
+                {
+                    LocationNameNum = locationNameNum,
+                    LocationName = ((Locations_Old)locationNameNum).ToString(),
+                    OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
+                });
+
+            }
         }
 
 
@@ -92,13 +94,18 @@ namespace Organiser.Controllers
         [Authorize]
         public IActionResult Create()
         {
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            using (_unitOfWork)
             {
-                return RedirectToAction("Logout", "Account");
-            }
+                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name,
+                    GetLocationIntValue("Orders")))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
 
-            TempData["Locations"] = LocationDefaults();
-            return View();
+                TempData["Locations"] = LocationDefaults();
+                return View();
+
+            }
         }
 
         // POST: Order/Create
@@ -117,7 +124,9 @@ namespace Organiser.Controllers
                 {
                     using (_unitOfWork)
                     {
-                        if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+                        if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name,
+                            GetLocationIntValue("Orders")))
+
                         {
                             return RedirectToAction("Logout", "Account");
                         }
@@ -148,11 +157,11 @@ namespace Organiser.Controllers
 
                         order.EntitiesNotProcessed = order.EntityCount;
                         order.DepartmentStates = DepartmentStateObjects;
-                        order.Status = ((Statuses_Old) 1).ToString();
-                        _appDbContext.Add(order);
-                        await _appDbContext.SaveChangesAsync();
+                        order.Status = ((Statuses_Old)1).ToString();
+                        _unitOfWork.OrderRepository.Add(order);
+                        await _unitOfWork.CompleteAsync();
 
-                        _logRepository.CreateLog(
+                        _unitOfWork.LogRepository.CreateLog(
                             HttpContext.User.Identity.Name,
                             "Order created.",
                             DateTime.Now,
@@ -179,18 +188,18 @@ namespace Organiser.Controllers
                 return Error("Order doesn't exist.");
             }
 
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
             {
                 return RedirectToAction("Logout", "Account");
             }
 
-            Order order = await _appDbContext.Orders.SingleOrDefaultAsync(m => m.OrderId == id);
+            var order = await _unitOfWork.OrderRepository.Find(x => x.OrderId == id).SingleOrDefaultAsync();
             if (order == null)
             {
                 return Error("Order doesn't exist.");
             }
             //Tino:ToDo
-            //order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
+            order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
             return View(order);
         }
 
@@ -199,73 +208,86 @@ namespace Organiser.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Customer, OrderId, OrderNumber, EntityType, Status")] Order order)
         {
-
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            using (_unitOfWork)
             {
-                return RedirectToAction("Logout", "Account");
-            }
 
-
-            if (_orderRepository.GetOrderByOrderNumber(order.OrderNumber) != null && _orderRepository.GetOrderByOrderNumber(order.OrderNumber).OrderId != order.OrderId)
-            {
-                ViewBag.errorMessage = "Error: order with order number " + order.OrderNumber + " already exists.";
-                //Tino:ToDo
-                //order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
-                return View(order);
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
                 {
-                    Order oldOrderState = _orderRepository.GetOrderAndDepartmentStatesById(order.OrderId);
+                    return RedirectToAction("Logout", "Account");
+                }
 
-                    if (order.Status != oldOrderState.Status)
+                if (_unitOfWork.OrderRepository.Find(x => x.OrderNumber == order.OrderNumber).FirstOrDefault() is null
+                && _unitOfWork.OrderRepository.Find(x => x.OrderNumber == order.OrderNumber).FirstOrDefault().OrderId != order.OrderId)
+                {
+                    ViewBag.errorMessage =
+                        "Error: order with order number " + order.OrderNumber + " already exists.";
+                    //Tino:ToDo
+                    order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
+                    return View(order);
+                }
+
+                if (ModelState.IsValid)
+                {
+                    try
                     {
-                        List<DepartmentState> newDepartmentStates = oldOrderState.DepartmentStates;
-                        if (order.Status == ((Statuses_Old)3).ToString())
-                        {
-                            if (order.StartedAt == DateTime.MinValue)
-                            {
-                                order.StartedAt = DateTime.Now;
-                            }
-                            order.FinshedAt = DateTime.Now;
-                            foreach (DepartmentState ls in newDepartmentStates)
-                            {
-                                ls.Status = order.Status;
-                                ls.EntitiesInProgress = 0;
-                                ls.EntitiesRFC = 0;
-                            }
-                        }
-                        oldOrderState.EntitiesNotProcessed = 0;
-                        oldOrderState.DepartmentStates = newDepartmentStates;
-                    }
-                    UpdateOrderValues(ref oldOrderState, order);
+                        Order oldOrderState = _unitOfWork.OrderRepository.GetAllToIQuerable().Include(x => x.DepartmentStates)
+                            .FirstOrDefault(o => o.OrderId == order.OrderId);
 
-                    _appDbContext.Update(oldOrderState);
-                    await _appDbContext.SaveChangesAsync();
-                    _logRepository.CreateLog(
+                        if (order.Status != oldOrderState.Status)
+                        {
+                            List<DepartmentState> newDepartmentStates = oldOrderState.DepartmentStates;
+                            if (order.Status == ((Statuses_Old)3).ToString())
+                            {
+                                if (order.StartedAt == DateTime.MinValue)
+                                {
+                                    order.StartedAt = DateTime.Now;
+                                }
+
+                                order.FinshedAt = DateTime.Now;
+                                foreach (DepartmentState ls in newDepartmentStates)
+                                {
+                                    ls.Status = order.Status;
+                                    ls.EntitiesInProgress = 0;
+                                    ls.EntitiesRFC = 0;
+                                }
+                            }
+
+                            oldOrderState.EntitiesNotProcessed = 0;
+                            oldOrderState.DepartmentStates = newDepartmentStates;
+                        }
+
+                        UpdateOrderValues(ref oldOrderState, order);
+
+                        _unitOfWork.Update(oldOrderState);
+                        await _unitOfWork.CompleteAsync();
+                        _unitOfWork.LogRepository.CreateLog(
                             HttpContext.User.Identity.Name,
                             "Edited order.",
                             DateTime.Now,
-                        order.OrderNumber);
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    using (_unitOfWork)
-                    {
-                        if (!_unitOfWork.OrderRepository.Find(o => o.OrderId == order.OrderId).Any())
-                        {
-                            return NotFound();
-                        }
-                        else throw;
+                            order.OrderNumber);
                     }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        using (_unitOfWork)
+                        {
+                            if (!_unitOfWork.OrderRepository.Find(o => o.OrderId == order.OrderId).Any())
+                            {
+                                return NotFound();
+                            }
+                            else
+                            {
+                                throw;
+                            }
+                        }
+                    }
+
+                    return RedirectToAction("Details", new { id = order.OrderId });
                 }
-                return RedirectToAction("Details", new { id = order.OrderId });
+
+                //Tino:ToDo
+                order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
+                return View(order);
             }
-            //Tino:ToDo
-            //order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
-            return View(order);
         }
 
         [HttpPost]
@@ -303,9 +325,13 @@ namespace Organiser.Controllers
             _appDbContext.SaveChanges();
             _logRepository.CreateLog(
                         HttpContext.User.Identity.Name,
-                        "Moved " + model.EntitiesPassed.ToString() + " " + _orderRepository.GetOrderById(sourceDepartmentState.OrderId).EntityType + " from " + sourceDepartmentState.Name + " to " + targetDepartmentState.Name + ".",
+                        "Moved " + model.EntitiesPassed.ToString() + " " + _unitOfWork.OrderRepository.Find(x => x.OrderId == sourceDepartmentState.OrderId).FirstOrDefault().EntityType + " from " + sourceDepartmentState.Name + " to " + targetDepartmentState.Name + ".",
                         DateTime.Now,
-                        _orderRepository.GetOrderNumberByOrderId(sourceDepartmentState.OrderId));
+                _unitOfWork.OrderRepository.Find(o => o.OrderId == sourceDepartmentState.OrderId)
+                    .Select(o => o.OrderNumber).FirstOrDefault());
+
+
+
 
             PassEntitiesResultModel resultModel = new PassEntitiesResultModel()
             {
@@ -325,165 +351,175 @@ namespace Organiser.Controllers
         [Authorize]
         public IActionResult Details(int id, int messageType = 0, string message = "")
         {
-            if (message != "")
+            using (_unitOfWork)
             {
-                if (messageType == 1)
+                if (message != "")
                 {
-                    ViewBag.successMessage = message;
-                }
-                else
-                {
-                    ViewBag.errorMessage = message;
-                }
-            }
-            Order order = _orderRepository.GetOrderAndDepartmentStatesById(id);
-            //string userRole = ((UserRoles)_userRepository.GetUserByName(HttpContext.User.Identity.Name).Role).ToString();
-
-            if (order == null)
-            {
-                ViewBag.ErrorMessage = "Order doesn't exist.";
-                return View("Error");
-            }
-            string webRoot = _hostingEnvironment.WebRootPath;
-            if (!Directory.Exists(webRoot + "/OrderFiles/"))
-            {
-                Directory.CreateDirectory(webRoot + "/OrderFiles/");
-            }
-            if (!Directory.Exists(webRoot + "/OrderFiles/" + order.OrderId.ToString() + "/"))
-            {
-                Directory.CreateDirectory(webRoot + "/OrderFiles/" + order.OrderId.ToString() + "/");
-            }
-            string[] strfiles = Directory.GetFiles(webRoot + "/OrderFiles/" + order.OrderId.ToString() + "/", "*.*");
-            Dictionary<string, string> fileNamesUrls = new Dictionary<string, string>();
-
-            if (strfiles.Length > 0)
-            {
-                string fileName;
-                for (int i = 0; i < strfiles.Length; i++)
-                {
-                    fileName = Path.GetFileName(strfiles[i]);
-
-                    string _CurrentFile = strfiles[i].ToString();
-                    if (System.IO.File.Exists(_CurrentFile))
+                    if (messageType == 1)
                     {
-                        string tempFileURL = "/OrderFiles/" + order.OrderId.ToString() + "/" + Path.GetFileName(_CurrentFile).Replace(" ", "%20");
-                        fileNamesUrls.Add(Path.GetFileName(_CurrentFile), tempFileURL);
+                        ViewBag.successMessage = message;
                     }
-
+                    else
+                    {
+                        ViewBag.errorMessage = message;
+                    }
                 }
-            }
+                Order order = _unitOfWork.OrderRepository.GetOrderAndDepartmentStatesById(id);
+                //string userRole = ((UserRoles)_userRepository.GetUserByName(HttpContext.User.Identity.Name).Role).ToString();
 
-            string UserName = HttpContext.User.Identity.Name;
-            List<int> userRoles = _userRepository.GetUserRolesByUserName(UserName);
-            List<int> allowedLocationPositions = new List<int>();
-            foreach (DepartmentState ls in order.DepartmentStates)
-            {
-                if (userRoles.Contains(GetLocationIntValue(ls.Name)) && ls.Status != ((Statuses_Old)3).ToString())
+                if (order == null)
                 {
-                    allowedLocationPositions.Add(ls.LocationPosition - 1);
+                    ViewBag.ErrorMessage = "Order doesn't exist.";
+                    return View("Error");
                 }
-            }
-            OrderStateViewModel model = new OrderStateViewModel
-            {
-                OrderDetails = order,
-                AllowedPositions = allowedLocationPositions
-            };
-            if (fileNamesUrls.Count() > 0)
-            {
-                model.FileNamesUrls = fileNamesUrls;
-            }
+                string webRoot = _hostingEnvironment.WebRootPath;
+                if (!Directory.Exists(webRoot + "/OrderFiles/"))
+                {
+                    Directory.CreateDirectory(webRoot + "/OrderFiles/");
+                }
+                if (!Directory.Exists(webRoot + "/OrderFiles/" + order.OrderId.ToString() + "/"))
+                {
+                    Directory.CreateDirectory(webRoot + "/OrderFiles/" + order.OrderId.ToString() + "/");
+                }
+                string[] strfiles = Directory.GetFiles(webRoot + "/OrderFiles/" + order.OrderId.ToString() + "/", "*.*");
+                Dictionary<string, string> fileNamesUrls = new Dictionary<string, string>();
 
-            return View(model);
+                if (strfiles.Length > 0)
+                {
+                    string fileName;
+                    for (int i = 0; i < strfiles.Length; i++)
+                    {
+                        fileName = Path.GetFileName(strfiles[i]);
+
+                        string _CurrentFile = strfiles[i].ToString();
+                        if (System.IO.File.Exists(_CurrentFile))
+                        {
+                            string tempFileURL = "/OrderFiles/" + order.OrderId.ToString() + "/" + Path.GetFileName(_CurrentFile).Replace(" ", "%20");
+                            fileNamesUrls.Add(Path.GetFileName(_CurrentFile), tempFileURL);
+                        }
+
+                    }
+                }
+
+                string UserName = HttpContext.User.Identity.Name;
+                List<int> userRoles = _userRepository.GetUserRolesByUserName(UserName);
+                List<int> allowedLocationPositions = new List<int>();
+                foreach (DepartmentState ls in order.DepartmentStates)
+                {
+                    if (userRoles.Contains(GetLocationIntValue(ls.Name)) && ls.Status != ((Statuses_Old)3).ToString())
+                    {
+                        allowedLocationPositions.Add(ls.LocationPosition - 1);
+                    }
+                }
+                OrderStateViewModel model = new OrderStateViewModel
+                {
+                    OrderDetails = order,
+                    AllowedPositions = allowedLocationPositions
+                };
+                if (fileNamesUrls.Count() > 0)
+                {
+                    model.FileNamesUrls = fileNamesUrls;
+                }
+
+                return View(model);
+
+            }
         }
 
         [HttpPost]
         [Authorize]
         public IActionResult FirstPickUp([Bind("OrderId, EntitiesPassed")] OrderStateViewModel model)
         {
-            Order order = new Order();
-            DepartmentState firstDepartmentState;
-
-            if (!ModelState.IsValid)
+            using (_unitOfWork)
             {
-                ViewBag.ErrorMessage = "Oops, something went wrong, refresh the page and try again.";
-                return View("Error");
-            }
-            if (_unitOfWork.OrderRepository.Find(o => o.OrderId == order.OrderId).Any())
-            {
-                order = _orderRepository.GetOrderById(model.OrderId); 
-            }
-            else
-            {
-                ViewBag.ErrorMessage = "Order doesn't exist.";
-                return View("Error");
-            }
+                Order order = new Order();
+                DepartmentState firstDepartmentState;
 
-            if (order.EntitiesNotProcessed < 1)
-            {
-                return RedirectToAction("Details", new { id = model.OrderId, message = "All entities related to this order have been processed." });
+                if (!ModelState.IsValid)
+                {
+                    ViewBag.ErrorMessage = "Oops, something went wrong, refresh the page and try again.";
+                    return View("Error");
+                }
+                if (_unitOfWork.OrderRepository.Find(o => o.OrderId == order.OrderId).Any())
+                {
+                    order = _unitOfWork.OrderRepository.GetById(model.OrderId);
+                }
+                else
+                {
+                    ViewBag.ErrorMessage = "Order doesn't exist.";
+                    return View("Error");
+                }
+
+                if (order.EntitiesNotProcessed < 1)
+                {
+                    return RedirectToAction("Details", new { id = model.OrderId, message = "All entities related to this order have been processed." });
+                }
+
+                if (model.EntitiesPassed > order.EntitiesNotProcessed ||
+                    model.EntitiesPassed < 1)
+                {
+                    return RedirectToAction("Details", new { id = model.OrderId, message = "Number of entities must be between 1 and " + order.EntitiesNotProcessed.ToString() });
+                }
+
+                firstDepartmentState = _appDbContext.DepartmentStates.FirstOrDefault(ls => ls.OrderId == order.OrderId && ls.LocationPosition == 1);
+
+                if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(firstDepartmentState.Name)))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+
+                order.EntitiesNotProcessed -= model.EntitiesPassed;
+                firstDepartmentState.EntitiesInProgress += model.EntitiesPassed;
+                order.DepartmentStates.Add(firstDepartmentState);
+                if (firstDepartmentState.Status == ((Statuses_Old)1).ToString())
+                {
+                    firstDepartmentState.Status = ((Statuses_Old)2).ToString();
+                    firstDepartmentState.Start = DateTime.Now;
+                }
+                if (order.Status != ((Statuses_Old)2).ToString())
+                {
+                    order.StartedAt = DateTime.Now;
+                    order.Status = ((Statuses_Old)2).ToString();
+                }
+
+                _appDbContext.Update(order);
+                _appDbContext.SaveChanges();
+
+                _logRepository.CreateLog(
+                HttpContext.User.Identity.Name,
+                "Started processing " + model.EntitiesPassed.ToString() + " " + _unitOfWork.OrderRepository.GetById(model.OrderId).EntityType + " in " + firstDepartmentState.Name + ".",
+                DateTime.Now,
+                order.OrderNumber);
+
+                return RedirectToAction("Details", new { id = model.OrderId, messageType = 1, message = model.EntitiesPassed.ToString() + " entities successfully passed to " + firstDepartmentState.Name });
+
             }
-
-            if (model.EntitiesPassed > order.EntitiesNotProcessed ||
-                model.EntitiesPassed < 1)
-            {
-                return RedirectToAction("Details", new { id = model.OrderId, message = "Number of entities must be between 1 and " + order.EntitiesNotProcessed.ToString() });
-            }
-
-            firstDepartmentState = _appDbContext.DepartmentStates.FirstOrDefault(ls => ls.OrderId == order.OrderId && ls.LocationPosition == 1);
-
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(firstDepartmentState.Name)))
-            {
-                return RedirectToAction("Logout", "Account");
-            }
-
-            order.EntitiesNotProcessed -= model.EntitiesPassed;
-            firstDepartmentState.EntitiesInProgress += model.EntitiesPassed;
-            order.DepartmentStates.Add(firstDepartmentState);
-            if (firstDepartmentState.Status == ((Statuses_Old)1).ToString())
-            {
-                firstDepartmentState.Status = ((Statuses_Old)2).ToString();
-                firstDepartmentState.Start = DateTime.Now;
-            }
-            if (order.Status != ((Statuses_Old)2).ToString())
-            {
-                order.StartedAt = DateTime.Now;
-                order.Status = ((Statuses_Old)2).ToString();
-            }
-
-            _appDbContext.Update(order);
-            _appDbContext.SaveChanges();
-
-            _logRepository.CreateLog(
-            HttpContext.User.Identity.Name,
-            "Started processing " + model.EntitiesPassed.ToString() + " " + _orderRepository.GetOrderById(model.OrderId).EntityType + " in " + firstDepartmentState.Name + ".",
-            DateTime.Now,
-            order.OrderNumber);
-
-            return RedirectToAction("Details", new { id = model.OrderId, messageType = 1, message = model.EntitiesPassed.ToString() + " entities successfully passed to " + firstDepartmentState.Name });
         }
 
         // GET: Order/Delete/5
         [Authorize]
         public IActionResult Delete(int? id)
         {
-            if (id == null)
+            using (_unitOfWork)
             {
-                return NotFound();
+                if (id == null)
+                {
+                    return NotFound();
+                }
+
+                if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+
+                Order order = _unitOfWork.OrderRepository.GetById((int)id);
+                if (order == null)
+                {
+                    return NotFound();
+                }
+
+                return View(new OrderStateViewModel() { OrderDetails = order });
             }
-
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
-            {
-                return RedirectToAction("Logout", "Account");
-            }
-
-            Order order = _orderRepository.GetOrderById(id);
-
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return View(new OrderStateViewModel() { OrderDetails = order });
         }
 
 
@@ -495,29 +531,33 @@ namespace Organiser.Controllers
         public IActionResult DeleteConfirmed(int id)
         {
 
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            using (_unitOfWork)
             {
-                return RedirectToAction("Logout", "Account");
+                if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+                Order order = _unitOfWork.OrderRepository.GetById(id);
+                _appDbContext.Orders.Remove(order);
+
+                _appDbContext.SaveChanges();
+
+                _logRepository.CreateLog(
+               HttpContext.User.Identity.Name,
+               "Deleted order.",
+               DateTime.Now,
+               order.OrderNumber);
+                if (!Directory.Exists(_hostingEnvironment.WebRootPath + "/OrderFiles/" + id + "/"))
+                {
+                    string dirPath = Path.Combine(
+                             Directory.GetCurrentDirectory(),
+                             "wwwroot" + "/OrderFiles/" + Convert.ToString(id) + "/");
+                    Directory.Delete(dirPath, true);
+                }
+
+                return RedirectToAction("Index");
+
             }
-            Order order = _orderRepository.GetOrderById(id);
-            _appDbContext.Orders.Remove(order);
-
-            _appDbContext.SaveChanges();
-
-            _logRepository.CreateLog(
-           HttpContext.User.Identity.Name,
-           "Deleted order.",
-           DateTime.Now,
-           order.OrderNumber);
-            if (!Directory.Exists(_hostingEnvironment.WebRootPath + "/OrderFiles/" + id + "/"))
-            {
-                string dirPath = Path.Combine(
-                         Directory.GetCurrentDirectory(),
-                         "wwwroot" + "/OrderFiles/" + Convert.ToString(id) + "/");
-                Directory.Delete(dirPath, true);
-            }
-
-            return RedirectToAction("Index");
         }
 
 

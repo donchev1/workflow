@@ -84,5 +84,7 @@ namespace Organiser.Models
 
             return activeOrders;
         }
+
+        GetOrderAndDepartmentStatesById
     }
 }
