@@ -294,10 +294,10 @@ namespace Organiser.Controllers
         [Authorize]
         public PassEntitiesResultModel PassEntities(EntityOrganiserViewModel model)
         {
-            DepartmentState sourceDepartmentState = _DepartmentStateRepository.GetDepartmentStateById(model.DepartmentStateId);
-            DepartmentState targetDepartmentState = _DepartmentStateRepository.GetDepartmentStateByOrderIdAndLocNum(sourceDepartmentState.OrderId, sourceDepartmentState.LocationPosition + 1);
+            DepartmentState sourceDepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateById(model.DepartmentStateId);
+            DepartmentState targetDepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateByOrderIdAndLocNum(sourceDepartmentState.OrderId, sourceDepartmentState.LocationPosition + 1);
 
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(targetDepartmentState.Name)))
+            if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(targetDepartmentState.Name)))
             {
                 Error("Something went wrong, logout and log back in to fix the issue.");
             }
@@ -319,11 +319,11 @@ namespace Organiser.Controllers
 
             targetDepartmentState.EntitiesInProgress += model.EntitiesPassed;
 
-            _appDbContext.Update(sourceDepartmentState);
-            _appDbContext.Update(targetDepartmentState);
+            _unitOfWork.Update(sourceDepartmentState);
+            _unitOfWork.Update(targetDepartmentState);
 
-            _appDbContext.SaveChanges();
-            _logRepository.CreateLog(
+            _unitOfWork.Complete();
+            _unitOfWork.LogRepository.CreateLog(
                         HttpContext.User.Identity.Name,
                         "Moved " + model.EntitiesPassed.ToString() + " " + _unitOfWork.OrderRepository.Find(x => x.OrderId == sourceDepartmentState.OrderId).FirstOrDefault().EntityType + " from " + sourceDepartmentState.Name + " to " + targetDepartmentState.Name + ".",
                         DateTime.Now,
@@ -365,7 +365,7 @@ namespace Organiser.Controllers
                     }
                 }
                 Order order = _unitOfWork.OrderRepository.GetOrderAndDepartmentStatesById(id);
-                //string userRole = ((UserRoles)_userRepository.GetUserByName(HttpContext.User.Identity.Name).Role).ToString();
+                //string userRole = ((UserRoles)_unitOfWork.UserRepository.GetUserByName(HttpContext.User.Identity.Name).Role).ToString();
 
                 if (order == null)
                 {
@@ -402,7 +402,7 @@ namespace Organiser.Controllers
                 }
 
                 string UserName = HttpContext.User.Identity.Name;
-                List<int> userRoles = _userRepository.GetUserRolesByUserName(UserName);
+                List<int> userRoles = _unitOfWork.UserRepository.GetUserRolesByUserName(UserName);
                 List<int> allowedLocationPositions = new List<int>();
                 foreach (DepartmentState ls in order.DepartmentStates)
                 {
@@ -461,9 +461,9 @@ namespace Organiser.Controllers
                     return RedirectToAction("Details", new { id = model.OrderId, message = "Number of entities must be between 1 and " + order.EntitiesNotProcessed.ToString() });
                 }
 
-                firstDepartmentState = _appDbContext.DepartmentStates.FirstOrDefault(ls => ls.OrderId == order.OrderId && ls.LocationPosition == 1);
+                firstDepartmentState = _unitOfWork.DepartmentStateRepository.Find(ls => ls.OrderId == order.OrderId && ls.LocationPosition == 1).FirstOrDefault();
 
-                if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(firstDepartmentState.Name)))
+                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(firstDepartmentState.Name)))
                 {
                     return RedirectToAction("Logout", "Account");
                 }
@@ -482,10 +482,10 @@ namespace Organiser.Controllers
                     order.Status = ((Statuses_Old)2).ToString();
                 }
 
-                _appDbContext.Update(order);
-                _appDbContext.SaveChanges();
+                _unitOfWork.Update(order);
+                _unitOfWork.Complete();
 
-                _logRepository.CreateLog(
+                _unitOfWork.LogRepository.CreateLog(
                 HttpContext.User.Identity.Name,
                 "Started processing " + model.EntitiesPassed.ToString() + " " + _unitOfWork.OrderRepository.GetById(model.OrderId).EntityType + " in " + firstDepartmentState.Name + ".",
                 DateTime.Now,
@@ -507,7 +507,7 @@ namespace Organiser.Controllers
                     return NotFound();
                 }
 
-                if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
                 {
                     return RedirectToAction("Logout", "Account");
                 }
@@ -533,16 +533,16 @@ namespace Organiser.Controllers
 
             using (_unitOfWork)
             {
-                if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
                 {
                     return RedirectToAction("Logout", "Account");
                 }
                 Order order = _unitOfWork.OrderRepository.GetById(id);
-                _appDbContext.Orders.Remove(order);
+                _unitOfWork.OrderRepository.Remove(order);
 
-                _appDbContext.SaveChanges();
+                _unitOfWork.Complete();
 
-                _logRepository.CreateLog(
+                _unitOfWork.LogRepository.CreateLog(
                HttpContext.User.Identity.Name,
                "Deleted order.",
                DateTime.Now,
