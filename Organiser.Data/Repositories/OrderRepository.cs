@@ -58,5 +58,11 @@ namespace Organiser.Data.Repositories
                 .Include(order => order.DepartmentStates)
                 .FirstOrDefault(o => o.OrderId == orderId);
         }
+
+        public string GetOrderNumberByOrderId(int orderId)
+        {
+
+            return _context.Orders.Where(o => o.OrderId == orderId).Select(o => o.OrderNumber).FirstOrDefault();
+        }
     }
 }
