@@ -27,13 +27,11 @@ namespace Organiser.Data.Context
                 .HasOne(ur => ur.User)
                 .WithMany(u => u.UserRoles)
                 .HasForeignKey(ur => ur.UserId);
-            //.HasConstraintName("ForeignKey_UserRole_User");
 
             modelBuilder.Entity<DepartmentState>()
                 .HasOne(ls => ls.Order)
                 .WithMany(ls => ls.DepartmentStates)
                 .HasForeignKey(ls => ls.OrderId);
-                //.HasConstraintName("ForeignKey_DepartmentState_Order");
         }
        
     }
