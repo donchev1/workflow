@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Organiser.Data.Context;
 using Organiser.Data.Models;
 using Organiser.Data.UnitOfWork;
-using Organiser.Models;
+using Organiser.Data.Models;
 using Organiser.ViewModels;
 using System;
 using System.Linq;

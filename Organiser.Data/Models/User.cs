@@ -19,6 +19,7 @@ namespace Organiser.Data.Models
         public List<UserRole> UserRoles { get; set; }
         public List<Log> Logs { get; set; }
 
+        [NotMapped]
         public List<SelectListItem> UserRolesDropdown { get; set; }
 
     }

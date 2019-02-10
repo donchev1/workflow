@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Organiser.Models;
+using Organiser.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;

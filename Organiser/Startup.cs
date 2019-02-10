@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Organiser.Models;
+using Organiser.Data.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -29,9 +29,6 @@ namespace Organiser
            var connection = Configuration.GetSection("ConnectionStrings").GetSection("OrganiserData").Value;
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(connection));
-
-            services.AddDbContext<AppDbContext_Old>(options =>
                 options.UseSqlServer(connection));
 
             services.AddAuthentication(o =>

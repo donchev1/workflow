@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Organiser.Models;
+using Organiser.Data.Models;
 
 
 namespace Organiser.ViewModels

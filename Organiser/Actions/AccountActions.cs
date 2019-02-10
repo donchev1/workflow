@@ -1,7 +1,7 @@
 ﻿using Organiser.Actions.ActionObjects;
 using Organiser.Controllers;
 using Organiser.Data.UnitOfWork;
-using Organiser.Models;
+using Organiser.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;

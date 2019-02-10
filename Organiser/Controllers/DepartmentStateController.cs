@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Organiser.Data.UnitOfWork;
-using Organiser.Models;
+using Organiser.Data.Models;
 using Organiser.ViewModels;
 using System;
 using System.Collections.Generic;

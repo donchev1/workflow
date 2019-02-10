@@ -32,6 +32,7 @@ namespace Organiser.Data.Models
         public List<DepartmentState> DepartmentStates { get; set; }
         public string Customer { get; set; }
 
+        [NotMapped]
         public List<SelectListItem> StatusDefaultsDropdown { get; set; }
 
     }
