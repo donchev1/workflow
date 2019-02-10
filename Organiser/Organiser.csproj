@@ -5,9 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\**" />
     <Compile Remove="wwwroot\OrderFiles\4003\**" />
+    <Content Remove="Migrations\**" />
     <Content Remove="wwwroot\OrderFiles\4003\**" />
+    <EmbeddedResource Remove="Migrations\**" />
     <EmbeddedResource Remove="wwwroot\OrderFiles\4003\**" />
+    <None Remove="Migrations\**" />
     <None Remove="wwwroot\OrderFiles\4003\**" />
   </ItemGroup>
 
@@ -28,9 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migrations\" />
     <Folder Include="Properties\PublishProfiles\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
   <ItemGroup>
