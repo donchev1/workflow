@@ -42,7 +42,7 @@ namespace Organiser.Controllers
                     List<string> userStringRoles = new List<string>();
                     foreach (UserRole role in user.UserRoles)
                     {
-                        userStringRoles.Add(((Enums.Locations)role.Role).ToString());
+                        userStringRoles.Add(((Enums.Department)role.Role).ToString());
                     }
                     user.UserRoles = null;
                     user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
@@ -339,7 +339,7 @@ namespace Organiser.Controllers
             {
                 foreach (UserRole role in user.UserRoles)
                 {
-                    stringRolesList.Add(((Enums.Locations)role.Role).ToString());
+                    stringRolesList.Add(((Enums.Department)role.Role).ToString());
                 }
             }
 

@@ -25,7 +25,7 @@ namespace Organiser.Controllers
 
             using (_unitOfWork)
             {
-                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(((Enums.Locations)id).ToString())))
+                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(((Enums.Department)id).ToString())))
                 {
                     return RedirectToAction("Logout", "Account");
                 }
@@ -50,7 +50,7 @@ namespace Organiser.Controllers
                 return View(new MessagesViewModel()
                 {
                     Notes = await PaginatedList<Note>.CreateAsync(notes.AsNoTracking(), page ?? 1, pageSize),
-                    LocationName = ((Enums.Locations)id).ToString(),
+                    LocationName = ((Enums.Department)id).ToString(),
                     LocationNameNum = id,
                     userIsAdmin = UserIsAdmin()
                 });
@@ -65,7 +65,7 @@ namespace Organiser.Controllers
             {
                 return View(new Note
                 {
-                    LocationName = ((Enums.Locations)DepartmentStateId).ToString(),
+                    LocationName = ((Enums.Department)DepartmentStateId).ToString(),
                     Location = DepartmentStateId
                 });
             }
@@ -97,7 +97,7 @@ namespace Organiser.Controllers
 
                 _unitOfWork.NoteRepository.Add(note);
                 _unitOfWork.Complete();
-                note.LocationName = ((Enums.Locations)note.Location).ToString();
+                note.LocationName = ((Enums.Department)note.Location).ToString();
                 ViewBag.successMessage = "Message sent!";
                 return View(note);
             }

@@ -143,8 +143,8 @@ namespace Organiser.Controllers
             {
                 return View(new OrderStateViewModel
                 {
-                    LocationName = ((Enums.Locations)DepartmentStateId).ToString(),
-                    LocationNameNum = GetLocationIntValue(((Enums.Locations)DepartmentStateId).ToString()),
+                    LocationName = ((Enums.Department)DepartmentStateId).ToString(),
+                    LocationNameNum = GetLocationIntValue(((Enums.Department)DepartmentStateId).ToString()),
                     ShowMessages = showMessages
                 });
             }

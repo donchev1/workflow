@@ -18,16 +18,18 @@ namespace Organiser.Data.Repositories
 
         public IQueryable<Order> GetAvailableOrdersForWork(int locationNameNum)
         {
-            return _context.Orders.Where(o => o.Status == (StatusType.InProgress) || o.EntitiesNotProcessed > 0)
+            string status = Enums.Statuses.InProgress.ToString();
+
+            return _context.Orders.Where(o => o.Status == status || o.EntitiesNotProcessed > 0)
                 .Include(o => o.DepartmentStates)
                 .Where(o => (o.DepartmentStates.Any(ls =>
-                                 ls.Name == ((Data.EnumType.Enums.Locations)locationNameNum).ToString() &&
+                                 ls.Name == ((Data.EnumType.Enums.Department)locationNameNum).ToString() &&
                                  o.EntitiesNotProcessed > 0 && o.DepartmentStates.Any(ls1 =>
-                                     ls1.Name == ((Enums.Locations)locationNameNum).ToString() &&
+                                     ls1.Name == ((Enums.Department)locationNameNum).ToString() &&
                                      ls1.LocationPosition == 1))
                              || o.DepartmentStates.Any(beforeLS =>
                                  beforeLS.LocationPosition == o.DepartmentStates.FirstOrDefault(originalLS =>
-                                         originalLS.Name == ((Enums.Locations)locationNameNum).ToString())
+                                         originalLS.Name == ((Enums.Department)locationNameNum).ToString())
                                      .LocationPosition - 1 && beforeLS.EntitiesRFC > 0)));
         }
 
@@ -38,14 +40,16 @@ namespace Organiser.Data.Repositories
 
         public List<Order> GetAllActiveOrdersForLocation(int DepartmentStateType)
         {
+            string departmentName = ((Enums.Department)DepartmentStateType).ToString();
+            string status = Enums.Statuses.InProgress.ToString();
             var activeOrders = _context.Orders.Include(o => o.DepartmentStates)
-                .Where(o => o.Status == (StatusType.InProgress) && o.DepartmentStates.Any(ls => ls.Name == ((Enums.Locations)DepartmentStateType).ToString() && ls.EntitiesInProgress > 0)).ToList();
+                .Where(o => o.Status == status && o.DepartmentStates.Any(ls => ls.Name == departmentName && ls.EntitiesInProgress > 0)).ToList();
 
             foreach (Order o in activeOrders)
             {
                 foreach (DepartmentState ls in o.DepartmentStates)
                 {
-                    o.DepartmentStates = o.DepartmentStates.Where(ls1 => ls1.Name == ((Enums.Locations)DepartmentStateType).ToString() && ls1.EntitiesInProgress > 0).ToList();
+                    o.DepartmentStates = o.DepartmentStates.Where(ls1 => ls1.Name == ((Enums.Department)DepartmentStateType).ToString() && ls1.EntitiesInProgress > 0).ToList();
                 }
             }
 

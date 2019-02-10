@@ -71,18 +71,18 @@ namespace Organiser.Controllers
                 IQueryable<Order> orders = _unitOfWork.OrderRepository.Context.Orders.Where(o => o.Status == (StatusType.InProgress) || o.EntitiesNotProcessed > 0)
                     .Include(o => o.DepartmentStates)
                     .Where(o => (o.DepartmentStates.Any(ls =>
-                                     ls.Name == ((Data.EnumType.Enums.Locations)locationNameNum).ToString() &&
+                                     ls.Name == ((Data.EnumType.Enums.Department)locationNameNum).ToString() &&
                                      o.EntitiesNotProcessed > 0 && o.DepartmentStates.Any(ls1 =>
-                                         ls1.Name == ((Enums.Locations)locationNameNum).ToString() &&
+                                         ls1.Name == ((Enums.Department)locationNameNum).ToString() &&
                                          ls1.LocationPosition == 1))
                                  || o.DepartmentStates.Any(beforeLS =>
                                      beforeLS.LocationPosition == o.DepartmentStates.FirstOrDefault(originalLS =>
-                                             originalLS.Name == ((Enums.Locations)locationNameNum).ToString())
+                                             originalLS.Name == ((Enums.Department)locationNameNum).ToString())
                                          .LocationPosition - 1 && beforeLS.EntitiesRFC > 0)));
                 return View(new OrderStateViewModel
                 {
                     LocationNameNum = locationNameNum,
-                    LocationName = ((Enums.Locations)locationNameNum).ToString(),
+                    LocationName = ((Enums.Department)locationNameNum).ToString(),
                     OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
                 });
 
@@ -570,7 +570,7 @@ namespace Organiser.Controllers
             {
                 orderNewDepartmentStates.Add(new DepartmentState
                 {
-                    Name = ((Enums.Locations)l).ToString(),
+                    Name = ((Enums.Department)l).ToString(),
                     LocationPosition = count + 1,
                     Status = ((Enums.Statuses)1).ToString(),
                     TotalEntityCount = order.EntityCount

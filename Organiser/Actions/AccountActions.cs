@@ -32,7 +32,7 @@ namespace Organiser.Actions
 
                     foreach (int role in _unitOfWork.UserRepository.GetUserRolesByUserId(user.UserId))
                     {
-                        claims.Add(new Claim(ClaimTypes.Role, ((Enums.Locations)role).ToString()));
+                        claims.Add(new Claim(ClaimTypes.Role, ((Enums.Department)role).ToString()));
                     }
 
                     if (user.IsAdmin)

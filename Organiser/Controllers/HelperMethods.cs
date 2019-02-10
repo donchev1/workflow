@@ -58,14 +58,14 @@ namespace Organiser.Controllers
             return new List<SelectListItem>
             {
                 new SelectListItem { Selected = true, Text = "- - Select - -", Value = "0"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)1).ToString(), Value = "1"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)2).ToString(), Value = "2"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)3).ToString(), Value = "3"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)4).ToString(), Value = "4"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)5).ToString(), Value = "5"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)6).ToString(), Value = "6"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)7).ToString(), Value = "7"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)8).ToString(), Value = "8"}
+                new SelectListItem { Selected = false, Text = ((Enums.Department)1).ToString(), Value = "1"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)2).ToString(), Value = "2"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)3).ToString(), Value = "3"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)4).ToString(), Value = "4"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)5).ToString(), Value = "5"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)6).ToString(), Value = "6"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)7).ToString(), Value = "7"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)8).ToString(), Value = "8"}
             };
         }
         public static List<SelectListItem> LocationDefaults()
@@ -73,13 +73,13 @@ namespace Organiser.Controllers
             return new List<SelectListItem>
             {
                 new SelectListItem { Selected = true, Text = "- - Select - -", Value = "0"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)1).ToString(), Value = "1"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)2).ToString(), Value = "2"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)3).ToString(), Value = "3"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)4).ToString(), Value = "4"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)5).ToString(), Value = "5"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)6).ToString(), Value = "6"},
-                new SelectListItem { Selected = false, Text = ((Enums.Locations)7).ToString(), Value = "7"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)1).ToString(), Value = "1"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)2).ToString(), Value = "2"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)3).ToString(), Value = "3"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)4).ToString(), Value = "4"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)5).ToString(), Value = "5"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)6).ToString(), Value = "6"},
+                new SelectListItem { Selected = false, Text = ((Enums.Department)7).ToString(), Value = "7"},
             };
         }
 
