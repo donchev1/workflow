@@ -13,7 +13,10 @@ namespace Organiser.Data.UnitOfWork
             LogRepository = new LogRepository(context);
             UserRepository = new UserRepository(context);
             OrderRepository = new OrderRepository(context);
-            UserRolesRepository = new UserRolesRepository(context);
+            UserRoleRepository = new UserRoleRepository(context);
+            DepartmentStateRepository = new DepartmentStateRepository(context);
+            DepartmentRepository = new DepartmentRepository(context);
+            NoteRepository = new NoteRepository(context);
         }
 
         private AppDbContext _context;
@@ -21,9 +24,11 @@ namespace Organiser.Data.UnitOfWork
         public LogRepository LogRepository { get; }
         public OrderRepository OrderRepository { get; }
         public UserRepository UserRepository { get; }
-        public UserRolesRepository UserRoleRepository { get; }
+        public UserRoleRepository UserRoleRepository { get; }
         public DepartmentStateRepository DepartmentStateRepository { get; }
-        
+        public DepartmentRepository DepartmentRepository { get; }
+        public NoteRepository NoteRepository { get; }
+
 
         public void Dispose()
         {

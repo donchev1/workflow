@@ -8,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Organiser.Actions;
-using Organiser.Services;
 using Organiser.Data;
 using Organiser.Data.Context;
 using Organiser.Data.UnitOfWork;
@@ -45,11 +44,7 @@ namespace Organiser
                 options.AccessDeniedPath = new PathString("/Account/Login/");
                 options.LoginPath = new PathString("/Account/Login/");
             });
-            services.AddTransient<IOrderRepository, OrderRepository>();
-            services.AddTransient<IUserRepository, UserRepository>();
-            services.AddTransient<INoteRepository, NoteRepository>();
             services.AddTransient<IAccountActions, AccountActions>();
-            services.AddTransient<IAccountService, AccountService>();
             services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             services.Configure<IISOptions>(options =>

@@ -1,65 +1,61 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Organiser.Models;
+using Organiser.Data.Models;
 using Organiser.ViewModels;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Organiser.Data.EnumType;
+using Organiser.Data.UnitOfWork;
 using static Organiser.Controllers.HelperMethods;
 
 namespace Organiser.Controllers
 {
     public class MessagesController : Controller
     {
-        private INoteRepository _noteRepository;
-        private readonly AppDbContext_Old _appDbContext;
-        private IUserRepository _userRepository;
-        public MessagesController(
-            AppDbContext_Old context,
-            INoteRepository noteRepository,
-            IUserRepository userRepository)
+        private IUnitOfWork _unitOfWork;
+        public MessagesController(IUnitOfWork unitOfWork)
         {
-            _userRepository = userRepository;
-            _noteRepository = noteRepository;
-            _appDbContext = context;
+            _unitOfWork = unitOfWork;
         }
-
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Index(int id, int? page, string message = "", int messageType = 0)
         {
 
-            if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(((Locations_Old)id).ToString())))
+            using (_unitOfWork)
             {
-                return RedirectToAction("Logout", "Account");
-            }
-
-            if (message != "")
-            {
-                if (messageType == 1)
+                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(((Enums.Locations)id).ToString())))
                 {
-                    ViewBag.errorMessage = message;
+                    return RedirectToAction("Logout", "Account");
                 }
-                else
+
+                if (message != "")
                 {
-                    ViewBag.successMessage = message;
+                    if (messageType == 1)
+                    {
+                        ViewBag.errorMessage = message;
+                    }
+                    else
+                    {
+                        ViewBag.successMessage = message;
+                    }
                 }
-            }
 
-            var notes = _noteRepository.GetNotesForLocation(id);
-            int pageSize = 5;
-            
-            _noteRepository.UpdateMonitor(id, false);
+                var notes = _unitOfWork.NoteRepository.GetNotesForLocation(id);
+                int pageSize = 5;
 
-            return View(new MessagesViewModel() {
-                Notes = await PaginatedList<Note>.CreateAsync(notes.AsNoTracking(), page ?? 1, pageSize),
-                LocationName = ((Locations_Old)id).ToString(),
-                LocationNameNum = id,
-                userIsAdmin = UserIsAdmin()
-            });            
-        }
+                _unitOfWork.NoteRepository.UpdateMonitor(id, false);
+
+                return View(new MessagesViewModel()
+                {
+                    Notes = await PaginatedList<Note>.CreateAsync(notes.AsNoTracking(), page ?? 1, pageSize),
+                    LocationName = ((Enums.Locations)id).ToString(),
+                    LocationNameNum = id,
+                    userIsAdmin = UserIsAdmin()
+                });
+
+            }        }
 
         [Authorize]
         [HttpGet]
@@ -69,7 +65,7 @@ namespace Organiser.Controllers
             {
                 return View(new Note
                 {
-                    LocationName = ((Locations_Old)DepartmentStateId).ToString(),
+                    LocationName = ((Enums.Locations)DepartmentStateId).ToString(),
                     Location = DepartmentStateId
                 });
             }
@@ -84,24 +80,24 @@ namespace Organiser.Controllers
         public IActionResult WriteNote(Note note)
         {
             DateTime present = DateTime.Now;
-            Note oldestNote = _noteRepository.GetOldestNote();
+            Note oldestNote = _unitOfWork.NoteRepository.GetOldestNote();
 
             if (ModelState.IsValid)
             {
                 note.CreatedAt = DateTime.Now;
                 note.Author = HttpContext.User.Identity.Name;
 
-                if (!_noteRepository.MonitorIsCreated())
+                if (!_unitOfWork.NoteRepository.MonitorIsCreated())
                 {
-                    _noteRepository.CreateMonitor();
+                    _unitOfWork.NoteRepository.CreateMonitor();
                 }
 
                
-                _noteRepository.UpdateMonitor(note.Location, true);
+                _unitOfWork.NoteRepository.UpdateMonitor(note.Location, true);
 
-                _appDbContext.Add(note);
-                _appDbContext.SaveChanges();
-                note.LocationName = ((Locations_Old)note.Location).ToString();
+                _unitOfWork.NoteRepository.Add(note);
+                _unitOfWork.Complete();
+                note.LocationName = ((Enums.Locations)note.Location).ToString();
                 ViewBag.successMessage = "Message sent!";
                 return View(note);
             }
@@ -114,11 +110,11 @@ namespace Organiser.Controllers
         [HttpPost]
         public bool CheckForNewMessages(int DepartmentStateId)
         {
-            if (!_noteRepository.MonitorIsCreated())
+            if (!_unitOfWork.NoteRepository.MonitorIsCreated())
             {
-                _noteRepository.CreateMonitor();
+                _unitOfWork.NoteRepository.CreateMonitor();
             }
-            bool result = _noteRepository.HasNewMessages(DepartmentStateId);
+            bool result = _unitOfWork.NoteRepository.HasNewMessages(DepartmentStateId);
             return result;
         }
 
@@ -132,7 +128,7 @@ namespace Organiser.Controllers
             if(eraseTo != DateTime.MinValue)
             {
 
-               _noteRepository.EraseNotesOlderThanDate(eraseTo);
+               _unitOfWork.NoteRepository.EraseNotesOlderThanDate(eraseTo);
                 return RedirectToAction("Index", new { id = locationNameNum, message = "Messages older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
             }
             else
@@ -150,7 +146,7 @@ namespace Organiser.Controllers
         private bool UserIsAdmin()
         {
             string UserName = HttpContext.User.Identity.Name;
-            return _userRepository.IsAdmin(UserName);
+            return _unitOfWork.UserRepository.IsAdmin(UserName);
         }
 
     }

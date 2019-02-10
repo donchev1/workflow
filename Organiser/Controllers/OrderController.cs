@@ -81,7 +81,7 @@ namespace Organiser.Controllers
                 return View(new OrderStateViewModel
                 {
                     LocationNameNum = locationNameNum,
-                    LocationName = ((Locations_Old)locationNameNum).ToString(),
+                    LocationName = ((Enums.Locations)locationNameNum).ToString(),
                     OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
                 });
 
@@ -157,7 +157,7 @@ namespace Organiser.Controllers
 
                         order.EntitiesNotProcessed = order.EntityCount;
                         order.DepartmentStates = DepartmentStateObjects;
-                        order.Status = ((Statuses_Old)1).ToString();
+                        order.Status = ((Enums.Statuses)1).ToString();
                         _unitOfWork.OrderRepository.Add(order);
                         await _unitOfWork.CompleteAsync();
 
@@ -236,7 +236,7 @@ namespace Organiser.Controllers
                         if (order.Status != oldOrderState.Status)
                         {
                             List<DepartmentState> newDepartmentStates = oldOrderState.DepartmentStates;
-                            if (order.Status == ((Statuses_Old)3).ToString())
+                            if (order.Status == ((Enums.Statuses)3).ToString())
                             {
                                 if (order.StartedAt == DateTime.MinValue)
                                 {
@@ -311,9 +311,9 @@ namespace Organiser.Controllers
                 Error("Entity count insufficient!");
             }
 
-            if (targetDepartmentState.Status == ((Statuses_Old)1).ToString())
+            if (targetDepartmentState.Status == ((Enums.Statuses)1).ToString())
             {
-                targetDepartmentState.Status = ((Statuses_Old)2).ToString();
+                targetDepartmentState.Status = ((Enums.Statuses)2).ToString();
                 targetDepartmentState.Start = DateTime.Now;
             }
 
@@ -406,7 +406,7 @@ namespace Organiser.Controllers
                 List<int> allowedLocationPositions = new List<int>();
                 foreach (DepartmentState ls in order.DepartmentStates)
                 {
-                    if (userRoles.Contains(GetLocationIntValue(ls.Name)) && ls.Status != ((Statuses_Old)3).ToString())
+                    if (userRoles.Contains(GetLocationIntValue(ls.Name)) && ls.Status != ((Enums.Statuses)3).ToString())
                     {
                         allowedLocationPositions.Add(ls.LocationPosition - 1);
                     }
@@ -471,15 +471,15 @@ namespace Organiser.Controllers
                 order.EntitiesNotProcessed -= model.EntitiesPassed;
                 firstDepartmentState.EntitiesInProgress += model.EntitiesPassed;
                 order.DepartmentStates.Add(firstDepartmentState);
-                if (firstDepartmentState.Status == ((Statuses_Old)1).ToString())
+                if (firstDepartmentState.Status == ((Enums.Statuses)1).ToString())
                 {
-                    firstDepartmentState.Status = ((Statuses_Old)2).ToString();
+                    firstDepartmentState.Status = ((Enums.Statuses)2).ToString();
                     firstDepartmentState.Start = DateTime.Now;
                 }
-                if (order.Status != ((Statuses_Old)2).ToString())
+                if (order.Status != ((Enums.Statuses)2).ToString())
                 {
                     order.StartedAt = DateTime.Now;
-                    order.Status = ((Statuses_Old)2).ToString();
+                    order.Status = ((Enums.Statuses)2).ToString();
                 }
 
                 _unitOfWork.Update(order);
@@ -569,9 +569,9 @@ namespace Organiser.Controllers
             {
                 orderNewDepartmentStates.Add(new DepartmentState
                 {
-                    Name = ((Locations_Old)l).ToString(),
+                    Name = ((Enums.Locations)l).ToString(),
                     LocationPosition = count + 1,
-                    Status = ((Statuses_Old)1).ToString(),
+                    Status = ((Enums.Statuses)1).ToString(),
                     TotalEntityCount = order.EntityCount
                 });
 

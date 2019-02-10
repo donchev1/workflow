@@ -6,9 +6,8 @@ using Organiser.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Organiser.Data.EnumType;
 using static Organiser.Controllers.HelperMethods;
-using DepartmentState = Organiser.Data.Models.DepartmentState;
-using Order = Organiser.Data.Models.Order;
 
 namespace Organiser.Controllers
 {
@@ -17,20 +16,12 @@ namespace Organiser.Controllers
     [Authorize]
     public class DepartmentStateController : Controller
     {
-        private readonly INoteRepository _noteRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public DepartmentStateController(AppDbContext_Old context,
-            IOrderRepository orderRepository,
-            IUserRepository userRepository,
-            IDepartmentStateRepository DepartmentStateRepository,
-            INoteRepository noteRepository,
-            ILogRepository_Old logRepository, IUnitOfWork unitOfWork)
+        public DepartmentStateController(IUnitOfWork unitOfWork)
 
         {
-            _noteRepository = noteRepository;
             _unitOfWork = unitOfWork;
-
         }
 
         [Authorize]
@@ -52,14 +43,14 @@ namespace Organiser.Controllers
 
                 try
                 {
-                    DepartmentState DepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateById(model.DepartmentStateId);
+                    var DepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateById(model.DepartmentStateId);
 
                     if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(DepartmentState.Name)))
                     {
                         Error("Something went wrong, logout and log back in to fix the issue.");
                     }
 
-                    Order order = _unitOfWork.OrderRepository.GetById(DepartmentState.OrderId);
+                    var order = _unitOfWork.OrderRepository.GetById(DepartmentState.OrderId);
                     string additionalMessage = "";
 
                     if (DepartmentState.EntitiesInProgress < model.EntitiesPassed)
@@ -75,7 +66,7 @@ namespace Organiser.Controllers
 
                     if (DepartmentState.TotalEntityCount == DepartmentState.EntitiesPassed)
                     {
-                        DepartmentState.Status = ((Statuses_Old)3).ToString();
+                        DepartmentState.Status = ((Enums.Statuses)3).ToString();
                         DepartmentState.Finish = DateTime.Now;
                     }
 
@@ -87,8 +78,8 @@ namespace Organiser.Controllers
                         if (DepartmentState.EntitiesRFC == order.EntityCount)
                         {
                             order.FinshedAt = DateTime.Now;
-                            order.Status = ((Statuses_Old)3).ToString();
-                            additionalMessage = "Order status: " + ((Statuses_Old)3).ToString() + ".";
+                            order.Status = ((Enums.Statuses)3).ToString();
+                            additionalMessage = "Order status: " + ((Enums.Statuses)3).ToString() + ".";
                         }
                         _unitOfWork.Update(order);
 
@@ -146,14 +137,14 @@ namespace Organiser.Controllers
             }
 
 
-            List<Order> orderList = _unitOfWork.OrderRepository.GetAllActiveOrdersForLocation(DepartmentStateId);
+            var orderList = _unitOfWork.OrderRepository.GetAllActiveOrdersForLocation(DepartmentStateId);
 
             if (orderList.Count() < 1)
             {
                 return View(new OrderStateViewModel
                 {
-                    LocationName = ((Locations_Old)DepartmentStateId).ToString(),
-                    LocationNameNum = GetLocationIntValue(((Locations_Old)DepartmentStateId).ToString()),
+                    LocationName = ((Enums.Locations)DepartmentStateId).ToString(),
+                    LocationNameNum = GetLocationIntValue(((Enums.Locations)DepartmentStateId).ToString()),
                     ShowMessages = showMessages
                 });
             }

@@ -112,7 +112,5 @@ namespace Organiser.Data.Repositories
         {
             return _appDbContext.Users.Include(x => x.UserRoles).ToList();
         }
-
-
     }
 }

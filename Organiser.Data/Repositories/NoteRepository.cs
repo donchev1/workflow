@@ -1,28 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Organiser.Controllers;
+using System.Text;
+using Organiser.Data.Context;
+using Organiser.Data.Models;
 
-namespace Organiser.Models
+namespace Organiser.Data.Repositories
 {
-    public class NoteRepository : INoteRepository
+    public class NoteRepository : Repository<AppDbContext, Note>
     {
-        public AppDbContext_Old _appDbContext;
-
-        public NoteRepository(AppDbContext_Old appDbContext)
+        public  AppDbContext _context;
+        public NoteRepository(AppDbContext context) : base(context)
         {
-            _appDbContext = appDbContext;
+            _context = context;
         }
 
         public bool HasNewMessages(int location)
         {
-            NewMessagesMonitor monitor = _appDbContext.NewMessagesMonitor.First();
+            var monitor = _context.NewMessagesMonitor.First();
             switch (location)
-            { 
+            {
                 case 1:
-                return monitor.Folirung;
+                    return monitor.Folirung;
                 case 2:
                     return monitor.Handarbeit;
                 case 3:
@@ -36,31 +35,31 @@ namespace Organiser.Models
                 case 7:
                     return monitor.Fahrer;
                 default:
-            return false;
+                    return false;
             }
         }
 
         public bool MonitorIsCreated()
         {
-            return _appDbContext.NewMessagesMonitor.Any();
+            return _context.NewMessagesMonitor.Any();
         }
 
         public void CreateMonitor()
         {
-            _appDbContext.Update(new NewMessagesMonitor());
-            _appDbContext.SaveChanges();
+            _context.Update(new NewMessagesMonitor());
+            _context.SaveChanges();
         }
 
         public void UpdateMonitor(int location, bool hasNewMessages)
         {
-            NewMessagesMonitor monitor = _appDbContext.NewMessagesMonitor.FirstOrDefault();
+            NewMessagesMonitor monitor = _context.NewMessagesMonitor.FirstOrDefault();
             switch (location)
             {
                 case 1:
                     monitor.Folirung = hasNewMessages;
                     break;
                 case 2:
-                     monitor.Handarbeit = hasNewMessages;
+                    monitor.Handarbeit = hasNewMessages;
                     break;
                 case 3:
                     monitor.Inkchet = hasNewMessages;
@@ -72,19 +71,19 @@ namespace Organiser.Models
                     monitor.Covertirung = hasNewMessages;
                     break;
                 case 6:
-                     monitor.Lager = hasNewMessages;
+                    monitor.Lager = hasNewMessages;
                     break;
                 case 7:
-                     monitor.Fahrer = hasNewMessages;
+                    monitor.Fahrer = hasNewMessages;
                     break;
             }
-            _appDbContext.Update(monitor);
-            _appDbContext.SaveChanges();
+            _context.Update(monitor);
+            _context.SaveChanges();
 
         }
 
         public IQueryable<Note> GetNotesForLocation(int location) =>
-                    _appDbContext.Notes.Where(n => n.Location == location)
+                    _context.Notes.Where(n => n.Location == location)
             .OrderByDescending(n => n.CreatedAt);
 
         //public IQueryable<Note> GetNotesForLocation(int location) =>
@@ -93,15 +92,14 @@ namespace Organiser.Models
 
         public Note GetOldestNote()
         {
-            return _appDbContext.Notes.OrderBy(n => n.CreatedAt).FirstOrDefault();
+            return _context.Notes.OrderBy(n => n.CreatedAt).FirstOrDefault();
         }
 
         public void EraseNotesOlderThanDate(DateTime date)
         {
-            List<Note> notes = _appDbContext.Notes.Where(n => n.CreatedAt < date).ToList();
-            _appDbContext.RemoveRange(notes);
-            _appDbContext.SaveChanges();
+            List<Note> notes = _context.Notes.Where(n => n.CreatedAt < date).ToList();
+            _context.RemoveRange(notes);
+            _context.SaveChanges();
         }
-        
     }
 }

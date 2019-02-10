@@ -12,7 +12,7 @@ namespace Organiser.Data.Models
         public int Location { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Author { get; set; }
-        //Tino:ToDo
-        //public string LocationName { get; set; }
+
+        public string LocationName { get; set; }
     }
 }

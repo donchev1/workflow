@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Organiser.Actions;
 using Organiser.Actions.ActionObjects;
+using Organiser.Data.EnumType;
 using Organiser.Data.UnitOfWork;
 
 namespace Organiser.Controllers
@@ -42,7 +43,7 @@ namespace Organiser.Controllers
                     List<string> userStringRoles = new List<string>();
                     foreach (UserRole role in user.UserRoles)
                     {
-                        userStringRoles.Add(((Locations_Old)role.Role).ToString());
+                        userStringRoles.Add(((Enums.Locations)role.Role).ToString());
                     }
                     user.UserRoles = null;
                     user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
@@ -339,7 +340,7 @@ namespace Organiser.Controllers
             {
                 foreach (UserRole role in user.UserRoles)
                 {
-                    stringRolesList.Add(((Locations_Old)role.Role).ToString());
+                    stringRolesList.Add(((Enums.Locations)role.Role).ToString());
                 }
             }
 
