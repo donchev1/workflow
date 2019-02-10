@@ -11,11 +11,6 @@ namespace Organiser.Data.Repositories
     {
         public AppDbContext _appDbContext;
 
-        //public UserRepository(AppDbContext appDbContext)
-        //{
-        //    _appDbContext = appDbContext;
-        //}
-
         public UserRepository(AppDbContext context) : base(context)
         {
         }
@@ -111,6 +106,11 @@ namespace Organiser.Data.Repositories
             return _appDbContext.Users
                 .Include(user => user.UserRoles)
                 .FirstOrDefault(u => u.UserId == userId);
+        }
+
+        public IEnumerable<User> GetAllUsersWithUserRoles()
+        {
+            return _appDbContext.Users.Include(x => x.UserRoles).ToList();
         }
 
 

@@ -47,9 +47,7 @@ namespace Organiser
             });
             services.AddTransient<IOrderRepository, OrderRepository>();
             services.AddTransient<IUserRepository, UserRepository>();
-            services.AddTransient<IDepartmentStateRepository, DepartmentStateRepository>();
             services.AddTransient<INoteRepository, NoteRepository>();
-            services.AddTransient<ILogRepository_Old, LogRepository>();
             services.AddTransient<IAccountActions, AccountActions>();
             services.AddTransient<IAccountService, AccountService>();
             services.AddTransient<IUnitOfWork, UnitOfWork>();

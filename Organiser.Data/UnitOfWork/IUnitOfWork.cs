@@ -13,6 +13,7 @@ namespace Organiser.Data.UnitOfWork
         UserRepository UserRepository { get; }
         OrderRepository OrderRepository { get; }
         DepartmentStateRepository DepartmentStateRepository { get; }
+        UserRoleRepository UserRoleRepository { get; }
 
         void Complete();
         Task CompleteAsync();

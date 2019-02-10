@@ -9,7 +9,7 @@ namespace Organiser.Models
     {
         bool UserExists(int id);
         List<int> GetUserRolesByUserId(int id);
-        IEnumerable<User> GetUsers { get; }
+        IEnumerable<User> GetUsersWithUserRoles(); 
         User GetUserById(int UserId);
         User GetUserByName(string userName);
         bool IsAdmin(string userName);

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Organiser.Models;
+using Organiser.Data.Models;
 
 
 namespace Organiser.ViewModels

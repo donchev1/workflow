@@ -21,9 +21,9 @@ namespace Organiser.Models
             return _appDbContext.Users.Any(e => e.UserId == id);
         }
 
-        public IEnumerable<User> GetUsers
+        public IEnumerable<User> GetUsersWithUserRoles()
         {
-            get { return _appDbContext.Users.Include(x => x.UserRoles).ToList(); }
+             return _appDbContext.Users.Include(x => x.UserRoles).ToList(); 
         }
 
         public User GetUserById(int UserId)
