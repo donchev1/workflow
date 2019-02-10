@@ -154,7 +154,7 @@ namespace Organiser.Controllers
                 }
                 try
                 {
-                    List<int> roleList = model.Roles.Where(x => x != 0).Distinct().ToList();
+                    var roleList = model.Roles.Where(x => x != null)?.Distinct()?.ToList();
                     User user = new User();
                     BuildUserEntity(model, ref user);
 
