@@ -441,7 +441,7 @@ namespace Organiser.Controllers
                     ViewBag.ErrorMessage = "Oops, something went wrong, refresh the page and try again.";
                     return View("Error");
                 }
-                if (_unitOfWork.OrderRepository.Find(o => o.OrderId == order.OrderId).Any())
+                if (_unitOfWork.OrderRepository.Find(o => o.OrderId == model.OrderId).Any())
                 {
                     order = _unitOfWork.OrderRepository.GetById(model.OrderId);
                 }

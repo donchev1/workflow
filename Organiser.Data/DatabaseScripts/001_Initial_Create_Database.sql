@@ -81,7 +81,6 @@ CREATE TABLE [Users] (
     [UserId] int NOT NULL IDENTITY,
     [UserName] nvarchar(max) NULL,
     [Password] nvarchar(max) NULL,
-    [ConfirmPassword] nvarchar(max) NULL,
     [IsAdmin] bit NOT NULL,
     CONSTRAINT [PK_Users] PRIMARY KEY ([UserId])
 );

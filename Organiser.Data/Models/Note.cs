@@ -12,7 +12,7 @@ namespace Organiser.Data.Models
         public int Location { get; set; }
         public DateTime CreatedAt { get; set; }
         public string Author { get; set; }
-
+        [NotMapped]
         public string LocationName { get; set; }
     }
 }

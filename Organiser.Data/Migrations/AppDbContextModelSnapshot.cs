@@ -175,8 +175,6 @@ namespace Organiser.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("ConfirmPassword");
-
                     b.Property<bool>("IsAdmin");
 
                     b.Property<string>("Password");
