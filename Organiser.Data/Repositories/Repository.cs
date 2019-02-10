@@ -1,17 +1,15 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using DbContext = Microsoft.EntityFrameworkCore.DbContext;
 
 namespace Organiser.Data.Repositories
 {
-    public abstract class Repository<TC, T> : IRepository<T>  where T : class where TC : DbContext
+    public abstract class Repository<TC, T> : IRepository<T> where T : class where TC : DbContext
     {
-        private bool _disposed;
+        private readonly bool _disposed;
 
         public TC Context { get; set; }
 
@@ -51,12 +49,12 @@ namespace Organiser.Data.Repositories
         {
             try
             {
-                var query = Context.Set<T>();
+                DbSet<T> query = Context.Set<T>();
                 return query;
             }
             catch (Exception e)
             {
-                throw new Exception("Organiser.Data.Repositories.Repository.GetAllToIQuerable" + e.Message); 
+                throw new Exception("Organiser.Data.Repositories.Repository.GetAllToIQuerable" + e.Message);
             }
         }
 
@@ -64,20 +62,20 @@ namespace Organiser.Data.Repositories
         {
             try
             {
-                var queryToList = Context.Set<T>().ToList();
+                List<T> queryToList = Context.Set<T>().ToList();
                 return queryToList;
             }
             catch (Exception e)
             {
-                throw new Exception("Organiser.Data.Repositories.Repository.GetAllToList" + e.Message); 
+                throw new Exception("Organiser.Data.Repositories.Repository.GetAllToList" + e.Message);
             }
         }
 
-        public IQueryable<T> GetFilteredToIQuerable(Expression<Func<T, bool>> predicate)
+        public IQueryable<T> Find(Expression<Func<T, bool>> predicate)
         {
             try
             {
-                var query = Context.Set<T>().Where(predicate);
+                IQueryable<T> query = Context.Set<T>().Where(predicate);
                 return query;
             }
             catch (Exception e)
@@ -90,7 +88,7 @@ namespace Organiser.Data.Repositories
         {
             try
             {
-                var query = Context.Set<T>().Where(predicate).ToList();
+                List<T> query = Context.Set<T>().Where(predicate).ToList();
                 return query;
             }
             catch (Exception e)
@@ -129,7 +127,7 @@ namespace Organiser.Data.Repositories
         {
             try
             {
-                var rangeToDelete  = Context.Set<T>().Where(predicate);
+                IQueryable<T> rangeToDelete = Context.Set<T>().Where(predicate);
 
                 Context.Set<T>().RemoveRange(rangeToDelete);
             }
@@ -143,9 +141,9 @@ namespace Organiser.Data.Repositories
         {
             try
             {
-                var enumerable = entitiesRange as IList<T> ?? entitiesRange.ToList();
+                IList<T> enumerable = entitiesRange as IList<T> ?? entitiesRange.ToList();
 
-                foreach (var entity in enumerable)
+                foreach (T entity in enumerable)
                 {
                     Context.Set<T>().Attach(entity);
                 }

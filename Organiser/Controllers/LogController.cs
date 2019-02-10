@@ -38,7 +38,7 @@ namespace Organiser.Controllers
 
                 if (orderNumber != null)
                 {
-                    Logs = _unitOfWork.LogRepository.GetFilteredToIQuerable(x => x.OrderNumber == orderNumber);
+                    Logs = _unitOfWork.LogRepository.Find(x => x.OrderNumber == orderNumber);
                     if (Logs == null)
                     {
                         Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
@@ -47,7 +47,7 @@ namespace Organiser.Controllers
                 }
                 else if (userName != null)
                 {
-                    Logs = _unitOfWork.LogRepository.GetFilteredToIQuerable(x => x.UserName == userName);
+                    Logs = _unitOfWork.LogRepository.Find(x => x.UserName == userName);
                     if (Logs == null)
                     {
                         Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
@@ -101,7 +101,7 @@ namespace Organiser.Controllers
         private bool UserIsAdmin()
         {
             string username = HttpContext.User.Identity.Name;
-                var user = _unitOfWork.UserRepository.GetFilteredToIQuerable((x => x.UserName == username));
+                var user = _unitOfWork.UserRepository.Find((x => x.UserName == username));
                 return user.Select(x => x.IsAdmin == true).FirstOrDefault();
         }
 

@@ -17,18 +17,14 @@ namespace Organiser.Models
         {
             _appDbContext = appDbContext;
         }
-        public bool OrderExists(int id)
-        {
-            return _appDbContext.Orders.Any(e => e.OrderId == id);
-        }
 
         public bool OrderExistsByOrderNumber(string orderNumber)
         {
             return _appDbContext.Orders.Any(e => e.OrderNumber == orderNumber);
         }
-        public IEnumerable<Order> Orders
+        public IEnumerable<Order> GetOrders()
         {
-            get { return _appDbContext.Orders; }
+             return _appDbContext.Orders; 
         }
 
         public IQueryable<Order> GetOrdersAndDepartmentStatesBySearchId(string SearchId)
@@ -37,14 +33,11 @@ namespace Organiser.Models
                         .Include(order => order.DepartmentStates)
                         .OrderByDescending(l => l.CreatedAt);
         }
-        public IQueryable<Order> OrdersAndDepartmentStates
+        public IQueryable<Order> OrdersAndDepartmentStates()
         {
-            get
-            {
                 return _appDbContext.Orders
                   .Include(order => order.DepartmentStates)
                   .OrderByDescending(l => l.CreatedAt);
-            }
         }
 
         public Order GetOrderAndDepartmentStatesById(int orderId)

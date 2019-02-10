@@ -1,14 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer;
+using Organiser.Data.UnitOfWork;
+using Organiser.Models;
+using Organiser.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Organiser.Models;
-using Organiser.ViewModels;
+using Remotion.Linq.Parsing.Structure.IntermediateModel;
 using static Organiser.Controllers.HelperMethods;
 
 namespace Organiser.Controllers
@@ -21,6 +24,7 @@ namespace Organiser.Controllers
         public IDepartmentStateRepository _DepartmentStateRepository;
         public IHostingEnvironment _hostingEnvironment;
         public ILogRepository_Old _logRepository;
+        public IUnitOfWork _unitOfWork;
 
         public OrderController(
             IHostingEnvironment hostingEnv,
@@ -28,7 +32,8 @@ namespace Organiser.Controllers
             AppDbContext_Old appDbContext,
             IUserRepository userRepository,
             IDepartmentStateRepository DepartmentStateRepository,
-            ILogRepository_Old logRepository)
+            ILogRepository_Old logRepository,
+            IUnitOfWork unitOfWork)
         {
             _appDbContext = appDbContext;
             _orderRepository = orderList;
@@ -36,6 +41,7 @@ namespace Organiser.Controllers
             _DepartmentStateRepository = DepartmentStateRepository;
             _hostingEnvironment = hostingEnv;
             _logRepository = logRepository;
+            _unitOfWork = unitOfWork;
         }
 
         [Authorize]
@@ -47,6 +53,11 @@ namespace Organiser.Controllers
             if (SearchID != "" && SearchID != null)
             {
                 orders = _orderRepository.GetOrdersAndDepartmentStatesBySearchId(SearchID);
+                IOrderedQueryable<Data.Models.Order> orders2 = _unitOfWork.OrderRepository.Find(o => o
+                        .OrderNumber
+                        .Contains(SearchID))
+                    .Include(or => or.DepartmentStates)
+                    .OrderByDescending(l => l.CreatedAt);
 
                 return View(new OrderStateViewModel
                 {
@@ -54,7 +65,7 @@ namespace Organiser.Controllers
                 });
             }
 
-            orders = _orderRepository.OrdersAndDepartmentStates;
+            orders = _orderRepository.OrdersAndDepartmentStates();
 
             return View(new OrderStateViewModel
             {
@@ -104,44 +115,50 @@ namespace Organiser.Controllers
             {
                 try
                 {
-                    if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+                    using (_unitOfWork)
                     {
-                        return RedirectToAction("Logout", "Account");
+                        if (!_userRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+                        {
+                            return RedirectToAction("Logout", "Account");
+                        }
+
+                        if (_unitOfWork.OrderRepository.Find(e => e.OrderNumber == order.OrderNumber).Any())
+                        {
+
+                            return Error("Error: order with order number " + order.OrderNumber + " already exists.");
+                        }
+
+                        List<int> DepartmentStatesUnorganised = new List<int>
+                            {locname0, locname1, locname2, locname3, locname4, locname5, locname6};
+
+                        order.CreatedAt = DateTime.Now;
+
+                        List<int> DepartmentStatesOrganised = DepartmentStateOrganiser(DepartmentStatesUnorganised);
+                        List<DepartmentState> DepartmentStateObjects = new List<DepartmentState>();
+
+                        if (DepartmentStatesOrganised.Count() > 0)
+                        {
+                            DepartmentStateObjects = CreateOrderDepartmentStates(DepartmentStatesOrganised, order);
+                        }
+                        else
+                        {
+                            DepartmentStatesOrganised.Add(7); //drivers
+                            DepartmentStateObjects = CreateOrderDepartmentStates(DepartmentStatesOrganised, order);
+                        }
+
+                        order.EntitiesNotProcessed = order.EntityCount;
+                        order.DepartmentStates = DepartmentStateObjects;
+                        order.Status = ((Statuses_Old) 1).ToString();
+                        _appDbContext.Add(order);
+                        await _appDbContext.SaveChangesAsync();
+
+                        _logRepository.CreateLog(
+                            HttpContext.User.Identity.Name,
+                            "Order created.",
+                            DateTime.Now,
+                            order.OrderNumber);
+                        return RedirectToAction("Index");
                     }
-
-                    if (_orderRepository.OrderExistsByOrderNumber(order.OrderNumber))
-                    {
-                        return Error("Error: order with order number " + order.OrderNumber + " already exists.");
-                    }
-                    List<int> DepartmentStatesUnorganised = new List<int> { locname0, locname1, locname2, locname3, locname4, locname5, locname6 };
-
-                    order.CreatedAt = DateTime.Now;
-
-                    List<int> DepartmentStatesOrganised = DepartmentStateOrganiser(DepartmentStatesUnorganised);
-                    List<DepartmentState> DepartmentStateObjects = new List<DepartmentState>();
-
-                    if (DepartmentStatesOrganised.Count() > 0)
-                    {
-                        DepartmentStateObjects = CreateOrderDepartmentStates(DepartmentStatesOrganised, order);
-                    }
-                    else
-                    {
-                        DepartmentStatesOrganised.Add(7); //drivers
-                        DepartmentStateObjects = CreateOrderDepartmentStates(DepartmentStatesOrganised, order);
-                    }
-
-                    order.EntitiesNotProcessed = order.EntityCount;
-                    order.DepartmentStates = DepartmentStateObjects;
-                    order.Status = ((Statuses_Old)1).ToString();
-                    _appDbContext.Add(order);
-                    await _appDbContext.SaveChangesAsync();
-
-                    _logRepository.CreateLog(
-                        HttpContext.User.Identity.Name,
-                        "Order created.",
-                        DateTime.Now,
-                        order.OrderNumber);
-                    return RedirectToAction("Index");
                 }
                 catch (Exception ex)
                 {
@@ -167,7 +184,7 @@ namespace Organiser.Controllers
                 return RedirectToAction("Logout", "Account");
             }
 
-            var order = await _appDbContext.Orders.SingleOrDefaultAsync(m => m.OrderId == id);
+            Order order = await _appDbContext.Orders.SingleOrDefaultAsync(m => m.OrderId == id);
             if (order == null)
             {
                 return Error("Order doesn't exist.");
@@ -235,13 +252,13 @@ namespace Organiser.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_orderRepository.OrderExists(order.OrderId))
+                    using (_unitOfWork)
                     {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
+                        if (!_unitOfWork.OrderRepository.Find(o => o.OrderId == order.OrderId).Any())
+                        {
+                            return NotFound();
+                        }
+                        else throw;
                     }
                 }
                 return RedirectToAction("Details", new { id = order.OrderId });
@@ -319,7 +336,7 @@ namespace Organiser.Controllers
                     ViewBag.errorMessage = message;
                 }
             }
-            var order = _orderRepository.GetOrderAndDepartmentStatesById(id);
+            Order order = _orderRepository.GetOrderAndDepartmentStatesById(id);
             //string userRole = ((UserRoles)_userRepository.GetUserByName(HttpContext.User.Identity.Name).Role).ToString();
 
             if (order == null)
@@ -327,7 +344,7 @@ namespace Organiser.Controllers
                 ViewBag.ErrorMessage = "Order doesn't exist.";
                 return View("Error");
             }
-            var webRoot = _hostingEnvironment.WebRootPath;
+            string webRoot = _hostingEnvironment.WebRootPath;
             if (!Directory.Exists(webRoot + "/OrderFiles/"))
             {
                 Directory.CreateDirectory(webRoot + "/OrderFiles/");
@@ -385,17 +402,15 @@ namespace Organiser.Controllers
         {
             Order order = new Order();
             DepartmentState firstDepartmentState;
-            string errorMessage = "";
 
             if (!ModelState.IsValid)
             {
                 ViewBag.ErrorMessage = "Oops, something went wrong, refresh the page and try again.";
                 return View("Error");
             }
-
-            if (_orderRepository.OrderExists(model.OrderId))
+            if (_unitOfWork.OrderRepository.Find(o => o.OrderId == order.OrderId).Any())
             {
-                order = _orderRepository.GetOrderById(model.OrderId);
+                order = _orderRepository.GetOrderById(model.OrderId); 
             }
             else
             {
@@ -461,7 +476,7 @@ namespace Organiser.Controllers
                 return RedirectToAction("Logout", "Account");
             }
 
-            var order = _orderRepository.GetOrderById(id);
+            Order order = _orderRepository.GetOrderById(id);
 
             if (order == null)
             {
@@ -484,7 +499,7 @@ namespace Organiser.Controllers
             {
                 return RedirectToAction("Logout", "Account");
             }
-            var order = _orderRepository.GetOrderById(id);
+            Order order = _orderRepository.GetOrderById(id);
             _appDbContext.Orders.Remove(order);
 
             _appDbContext.SaveChanges();
@@ -496,7 +511,7 @@ namespace Organiser.Controllers
            order.OrderNumber);
             if (!Directory.Exists(_hostingEnvironment.WebRootPath + "/OrderFiles/" + id + "/"))
             {
-                var dirPath = Path.Combine(
+                string dirPath = Path.Combine(
                          Directory.GetCurrentDirectory(),
                          "wwwroot" + "/OrderFiles/" + Convert.ToString(id) + "/");
                 Directory.Delete(dirPath, true);

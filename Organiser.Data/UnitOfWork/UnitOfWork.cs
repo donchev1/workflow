@@ -11,11 +11,13 @@ namespace Organiser.Data.UnitOfWork
             _context = context;
             LogRepository = new LogRepository(context);
             UserRepository = new UserRepository(context);
+            OrderRepository = new OrderRepository(context);
         }
 
         private AppDbContext _context;
 
         public LogRepository LogRepository { get; }
+        public OrderRepository OrderRepository { get; }
         public UserRepository UserRepository { get; }
 
         public void Dispose()

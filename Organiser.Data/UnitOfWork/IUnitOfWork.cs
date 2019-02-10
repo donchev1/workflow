@@ -10,6 +10,7 @@ namespace Organiser.Data.UnitOfWork
     {
         LogRepository LogRepository { get; }
         UserRepository UserRepository { get; }
+        OrderRepository OrderRepository { get; }
 
     }
 }

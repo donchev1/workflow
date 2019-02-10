@@ -12,7 +12,7 @@ namespace Organiser.Data.Repositories
         void Load();
         IQueryable<T> GetAllToIQuerable();
         List<T> GetAllToList();
-        IQueryable<T> GetFilteredToIQuerable(Expression<Func<T, bool>> predicate);
+        IQueryable<T> Find(Expression<Func<T, bool>> predicate);
         List<T> GetFilteredToList(Expression<Func<T, bool>> predicate);
         void Add(T entity);
         void AddRange(IEnumerable<T> entitiesRange);
