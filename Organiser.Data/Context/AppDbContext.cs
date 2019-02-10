@@ -21,8 +21,6 @@ namespace Organiser.Data.Context
         public DbSet<NewMessagesMonitor> NewMessagesMonitor { get; set; }
         public DbSet<Log> Logs { get; set; }
 
-        public IConfiguration Configuration { get; }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<UserRole>()
