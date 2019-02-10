@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Organiser.Models;
+using Organiser.Data.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Organiser.Actions;
-using Organiser.Services;
+using Organiser.Data;
+using Organiser.Data.Context;
+using Organiser.Data.UnitOfWork;
 
 namespace Organiser
 {
@@ -32,6 +30,7 @@ namespace Organiser
 
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(connection));
+
             services.AddAuthentication(o =>
             {
                 o.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -42,13 +41,8 @@ namespace Organiser
                 options.AccessDeniedPath = new PathString("/Account/Login/");
                 options.LoginPath = new PathString("/Account/Login/");
             });
-            services.AddTransient<IOrderRepository, OrderRepository>();
-            services.AddTransient<IUserRepository, UserRepository>();
-            services.AddTransient<IDepartmentStateRepository, DepartmentStateRepository>();
-            services.AddTransient<INoteRepository, NoteRepository>();
-            services.AddTransient<ILogRepository, LogRepository>();
             services.AddTransient<IAccountActions, AccountActions>();
-            services.AddTransient<IAccountService, AccountService>();
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             services.Configure<IISOptions>(options =>
             {

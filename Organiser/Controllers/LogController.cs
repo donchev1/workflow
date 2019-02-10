@@ -1,84 +1,81 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Organiser.Data.Context;
+using Organiser.Data.Models;
+using Organiser.Data.UnitOfWork;
+using Organiser.Data.Models;
+using Organiser.ViewModels;
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Organiser.Models;
-using Organiser.ViewModels;
-using static Organiser.Controllers.HelperMethods;
 
 namespace Organiser.Controllers
 {
     public class LogController : Controller
     {
-        public AppDbContext _appDbContext;
-        public ILogRepository _logRepository;
-        public IUserRepository _userRepository;
+        public IUnitOfWork _unitOfWork;
 
-        public LogController(
-            AppDbContext appDbContext,
-            IUserRepository userRepository,
-            ILogRepository logRepository)
+        public LogController( IUnitOfWork unitOfWork)
         {
-            _appDbContext = appDbContext;
-            _logRepository = logRepository;
-            _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
         }
 
         [Authorize]
         public async Task<IActionResult> Index(string orderNumber, string userName, int? page, string message = "", int messageType = 0)
         {
-            IQueryable<Log> Logs;
-            int pageSize = 20;
-            if (!UserIsAdmin())
+            using (_unitOfWork)
             {
-                RedirectToAction("Index", "Order");
-            }
 
-            if (orderNumber != null)
-            {
-                Logs = _logRepository.GetActionRecordsByOrderNumber(orderNumber);
-                if (Logs == null)
-                {
-                    Logs = _logRepository.GetAllLogs();
-                    ViewBag.errorMessage = "There are no event records related to order with order number: " + orderNumber;
-                }
-            }
-            else if (userName != null)
-            {
-                Logs = _logRepository.GetActionRecordsByUserName(userName);
-                if (Logs == null)
-                {
-                    Logs = _logRepository.GetAllLogs();
-                    ViewBag.errorMessage = "There are no event records related to user with user name: " + userName;
-                }
-            }
-            else
-            {
-                Logs = _logRepository.GetAllLogs();
-            }
+                IQueryable<Log> Logs;
 
-            if (message != "")
-            {
-                if (messageType == 1)
+
+                int pageSize = 20;
+                if (!UserIsAdmin())
                 {
-                    ViewBag.errorMessage = message;
+                    RedirectToAction("Index", "Order");
+                }
+
+                if (orderNumber != null)
+                {
+                    Logs = _unitOfWork.LogRepository.Find(x => x.OrderNumber == orderNumber);
+                    if (Logs == null)
+                    {
+                        Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
+                        ViewBag.errorMessage = "There are no event records related to order with order number: " + orderNumber;
+                    }
+                }
+                else if (userName != null)
+                {
+                    Logs = _unitOfWork.LogRepository.Find(x => x.UserName == userName);
+                    if (Logs == null)
+                    {
+                        Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
+                        ViewBag.errorMessage = "There are no event records related to user with user name: " + userName;
+                    }
                 }
                 else
                 {
-                    ViewBag.successMessage = message;
+                    Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
                 }
-            }
 
-            return View(new LogsViewModel()
-            {
-                Logs = await PaginatedList<Log>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize)
-            });
+                if (message != "")
+                {
+                    if (messageType == 1)
+                    {
+                        ViewBag.errorMessage = message;
+                    }
+                    else
+                    {
+                        ViewBag.successMessage = message;
+                    }
+                }
+
+                return View(new LogsViewModel()
+                {
+                    Logs = await PaginatedList<Log>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize)
+                });
+            }
         }
 
 
@@ -92,9 +89,8 @@ namespace Organiser.Controllers
             }
             if (eraseTo != DateTime.MinValue)
             {
-
-                _logRepository.EraseLogsOlderThanDate(eraseTo);
-                return RedirectToAction("Index", new { message = "Log context older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
+                    _unitOfWork.LogRepository.RemoveRange(x => x.CreatedAt < eraseTo );
+                    return RedirectToAction("Index", new { message = "Log context older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
             }
             else
             {
@@ -104,8 +100,9 @@ namespace Organiser.Controllers
 
         private bool UserIsAdmin()
         {
-            string UserName = HttpContext.User.Identity.Name;
-            return _userRepository.IsAdmin(UserName);
+            string username = HttpContext.User.Identity.Name;
+                var user = _unitOfWork.UserRepository.Find((x => x.UserName == username));
+                return user.Select(x => x.IsAdmin == true).FirstOrDefault();
         }
 
         private IActionResult Error(string errorMessage)
@@ -114,5 +111,5 @@ namespace Organiser.Controllers
             return View("Error");
         }
     }
-    
+
 }

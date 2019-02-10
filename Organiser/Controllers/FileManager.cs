@@ -2,33 +2,27 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Organiser.Models;
+using Organiser.Data.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
+using Organiser.Data.UnitOfWork;
 
 namespace Organiser.Controllers
 {
     public class FileManagerController : Controller
     {
-        private AppDbContext _appDbContext;
-        private IOrderRepository _orderRepository;
         public readonly IHostingEnvironment _hostingEnvironment;
-        public ILogRepository _logRepository;
+        public IUnitOfWork _unitOfWork;
 
         public FileManagerController(
-            IHostingEnvironment hostingEnvironment,
-            AppDbContext appDbContext,
-            IOrderRepository orderRepository,
-            ILogRepository logRepository)
+            IHostingEnvironment hostingEnvironment,IUnitOfWork unitOfWork)
         {
-            _appDbContext = appDbContext;
-            _orderRepository = orderRepository;
+            _unitOfWork = unitOfWork; 
             _hostingEnvironment = hostingEnvironment;
-            _logRepository = logRepository;
         }
 
         // GET: Home
@@ -39,20 +33,23 @@ namespace Organiser.Controllers
 
         public async Task<IActionResult> AddFile(int? id)
         {
-            if (id == null)
+            using (_unitOfWork)
             {
-                return NotFound();
-            }
+                if (id == null)
+                {
+                    return NotFound();
+                }
 
-            var order = _orderRepository.GetOrderById(id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-            var webRoot = _hostingEnvironment.WebRootPath;
+                var order = _unitOfWork.OrderRepository.GetById((int)id);
+                if (order == null)
+                {
+                    return NotFound();
+                }
+                var webRoot = _hostingEnvironment.WebRootPath;
 
-            return View(order);
-        }
+                return View(order);
+
+            }        }
 
         [HttpPost]
         public async Task<IActionResult> UploadFile(IFormCollection form)
@@ -90,11 +87,11 @@ namespace Organiser.Controllers
 
             int orderIdInt = Int32.Parse(orderId);
 
-            _logRepository.CreateLog(
+            _unitOfWork.LogRepository.CreateLog(
            HttpContext.User.Identity.Name,
            "Uploaded file: " + form.Files[0].FileName,
            DateTime.Now,
-           _orderRepository.GetOrderNumberByOrderId(orderIdInt));
+          _unitOfWork.OrderRepository.GetOrderNumberByOrderId(orderIdInt));
 
             return RedirectToAction("Details", "Order", new { id = Convert.ToString(orderId), messageType = 1, message = "File Uploaded." });
         }
@@ -116,11 +113,11 @@ namespace Organiser.Controllers
                 System.IO.File.Delete(dirPath);
             }
 
-            _logRepository.CreateLog(
+            _unitOfWork.LogRepository.CreateLog(
            HttpContext.User.Identity.Name,
            "Deleted file: " + fileName,
            DateTime.Now,
-           _orderRepository.GetOrderNumberByOrderId(orderId));
+           _unitOfWork.OrderRepository.GetOrderNumberByOrderId(orderId));
 
             return RedirectToAction("Details", "Order", new { id = orderId, messageType = 1, message = "File Deleted." });
 
@@ -142,11 +139,11 @@ namespace Organiser.Controllers
             }
             memory.Position = 0;
 
-            _logRepository.CreateLog(
+            _unitOfWork.LogRepository.CreateLog(
            HttpContext.User.Identity.Name,
            "Downloaded file: " + fileName,
            DateTime.Now,
-           _orderRepository.GetOrderNumberByOrderId(orderId));
+           _unitOfWork.OrderRepository.GetOrderNumberByOrderId(orderId));
             if (GetContentType(path) == "")
             {
                 return Error("Only files with these extensions are allowed: pdf/png/jpg/jpeg/gif");

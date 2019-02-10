@@ -3,39 +3,29 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Organiser.Models;
+using Organiser.Data.Models;
 using Organiser.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using static Organiser.Controllers.HelperMethods;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Organiser.Actions;
 using Organiser.Actions.ActionObjects;
+using Organiser.Data.EnumType;
+using Organiser.Data.UnitOfWork;
 
 namespace Organiser.Controllers
 {
     public class AccountController : Controller
     {
-        private AppDbContext _appDbContext;
-        private IUserRepository _userRepository;
-        private IOrderRepository _orderRepository;
-        private ILogRepository _logRepository;
         private IAccountActions _accountActions;
-        public AccountController(
-            AppDbContext appDbContext,
-            IUserRepository userRepository,
-            IOrderRepository orderRepository,
-            ILogRepository logRepository,
-            IAccountActions accountActions)
+        private IUnitOfWork _unitOfWork;
+        public AccountController(IAccountActions accountActions, IUnitOfWork unitOfWork)
         {
-            _appDbContext = appDbContext;
-            _userRepository = userRepository;
-            _orderRepository = orderRepository;
-            _logRepository = logRepository;
             _accountActions = accountActions;
+            _unitOfWork = unitOfWork;
         }
 
         [Authorize]
@@ -45,14 +35,14 @@ namespace Organiser.Controllers
             {
                 UsersViewModel model = new UsersViewModel();
                 IEnumerable<User> users;
-                users = _userRepository.GetUsers;
+                users = _unitOfWork.UserRepository.GetAllUsersWithUserRoles();
                 foreach (User user in users)
                 {
                     user.UserRolesDropdown = new List<SelectListItem>();
                     List<string> userStringRoles = new List<string>();
                     foreach (UserRole role in user.UserRoles)
                     {
-                        userStringRoles.Add(((Locations)role.Role).ToString());
+                        userStringRoles.Add(((Enums.Locations)role.Role).ToString());
                     }
                     user.UserRoles = null;
                     user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
@@ -135,57 +125,60 @@ namespace Organiser.Controllers
         public async Task<IActionResult> Create(
         [Bind("UserEntity, Roles")] UsersCreateUpdateViewModel model)
         {
-            if (!UserIsAdmin())
+            using (_unitOfWork)
             {
-                return Error("You need to be logged in as admin to do this.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                model.RoleDropDown = RoleDefaults();
-                return View(model);
-            }
-
-
-            if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
-            {
-                model.RoleDropDown = RoleDefaults();
-                ViewBag.errorMessage = "Password and Confirm Password fields must match!";
-                return View(model);
-            }
-            else if (_userRepository.GetUserByName(model.UserEntity.UserName) != null)
-            {
-                model.RoleDropDown = RoleDefaults();
-                ViewBag.errorMessage = "A user with the same user name already exists!";
-                return View(model);
-            }
-            try
-            {
-                List<int> roleList = model.Roles.Where(x => x != 0).Distinct().ToList();
-                User user = new User();
-                BuildUserEntity(model, ref user);
-
-                if (roleList.Count > 0)
+                if (!UserIsAdmin())
                 {
-                    user.UserRoles = CreateUserRoles(roleList);
+                    return Error("You need to be logged in as admin to do this.");
                 }
-                _appDbContext.Add(user);
-                await _appDbContext.SaveChangesAsync();
 
-                _logRepository.CreateLog(
-                  HttpContext.User.Identity.Name,
-                  "Created a user. With user name: [" + user.UserName + "].",
-                  DateTime.Now,
-                  null);
-                TempData["success"] = "User created.";
-                return RedirectToAction("Index");
-            }
-            catch (Exception ex)
-            {
-                ViewBag.ErrorMessage = ex;
-                return View("Error");
-            }
-        }
+                if (!ModelState.IsValid)
+                {
+                    model.RoleDropDown = RoleDefaults();
+                    return View(model);
+                }
+
+
+                if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
+                {
+                    model.RoleDropDown = RoleDefaults();
+                    ViewBag.errorMessage = "Password and Confirm Password fields must match!";
+                    return View(model);
+                }
+                else if (_unitOfWork.UserRepository.GetUserByName(model.UserEntity.UserName) != null)
+                {
+                    model.RoleDropDown = RoleDefaults();
+                    ViewBag.errorMessage = "A user with the same user name already exists!";
+                    return View(model);
+                }
+                try
+                {
+                    var roleList = model.Roles.Where(x => x != null)?.Distinct()?.ToList();
+                    User user = new User();
+                    BuildUserEntity(model, ref user);
+
+                    if (roleList.Count > 0)
+                    {
+                        user.UserRoles = CreateUserRoles(roleList);
+                    }
+                    _unitOfWork.UserRepository.Add(user);
+                    await _unitOfWork.CompleteAsync();
+
+                    _unitOfWork.LogRepository.CreateLog(
+                      HttpContext.User.Identity.Name,
+                      "Created a user. With user name: [" + user.UserName + "].",
+                      DateTime.Now,
+                      null);
+                    TempData["success"] = "User created.";
+                    return RedirectToAction("Index");
+                }
+                catch (Exception ex)
+                {
+                    ViewBag.ErrorMessage = ex;
+                    return View("Error");
+                }
+
+            }        }
 
 
         [HttpGet]
@@ -193,7 +186,7 @@ namespace Organiser.Controllers
         {
             string userName = HttpContext.User.Identity.Name;
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            _logRepository.CreateLog(
+            _unitOfWork.LogRepository.CreateLog(
                  userName,
                  "Logged out.",
                  DateTime.Now,
@@ -216,7 +209,7 @@ namespace Organiser.Controllers
             }
             int idNotNull = (int)id;
 
-            User user = _userRepository.GetUserAndRolesById(idNotNull);
+            User user = _unitOfWork.UserRepository.GetUserAndRolesById(idNotNull);
             if (user == null)
             {
                 return Error("User with id " + id.ToString() + " doesn't exist.");
@@ -249,17 +242,17 @@ namespace Organiser.Controllers
                 return View(model);
             }
 
-            if (!_userRepository.UserExists(model.UserEntity.UserId))
+            if (!_unitOfWork.UserRepository.UserExists(model.UserEntity.UserId))
             {
                 return Error("User with user id " + model.UserEntity.UserId.ToString() + " doesn't exist.");
             }
-            if (_userRepository.GetUserByName(model.UserEntity.UserName) != null && _userRepository.GetUserByName(model.UserEntity.UserName).UserId != model.UserEntity.UserId)
+            if (_unitOfWork.UserRepository.GetUserByName(model.UserEntity.UserName) != null && _unitOfWork.UserRepository.GetUserByName(model.UserEntity.UserName).UserId != model.UserEntity.UserId)
             {
                 model.RoleDropDown = RoleDefaults();
                 ViewBag.errorMessage = "A user with username " + model.UserEntity.UserName + " already exists.";
                 return View(model);
             }
-            User user = _userRepository.GetUserAndRolesById(model.UserEntity.UserId);
+            User user = _unitOfWork.UserRepository.GetUserAndRolesById(model.UserEntity.UserId);
             BuildUserEntity(model, ref user);
 
 
@@ -267,8 +260,8 @@ namespace Organiser.Controllers
 
             if (user.UserRoles.Count > 0)
             {
-                _appDbContext.RemoveRange(user.UserRoles);
-               await _appDbContext.SaveChangesAsync();
+                _unitOfWork.UserRoleRepository.RemoveRange(user.UserRoles);
+               await _unitOfWork.CompleteAsync();
             }
 
             if (roleList.Count > 0)
@@ -278,12 +271,12 @@ namespace Organiser.Controllers
 
             try
             {
-                _appDbContext.Update(user);
-                await _appDbContext.SaveChangesAsync();
+                _unitOfWork.Update(user);
+                await _unitOfWork.CompleteAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_userRepository.UserExists(user.UserId))
+                if (!_unitOfWork.UserRepository.UserExists(user.UserId))
                 {
                     return Error("Something went wront. Try again.");
                 }
@@ -293,7 +286,7 @@ namespace Organiser.Controllers
                 }
             }
 
-            _logRepository.CreateLog(
+            _unitOfWork.LogRepository.CreateLog(
                 HttpContext.User.Identity.Name,
                 "Edited user with user name: [" + user.UserName + "].",
                 DateTime.Now,
@@ -334,7 +327,7 @@ namespace Organiser.Controllers
                 return Error("You need to be logged in as admin to do this.");
             }
 
-            User user = _userRepository.GetUserAndRolesById(id);
+            User user = _unitOfWork.UserRepository.GetUserAndRolesById(id);
             if (user == null)
             {
                 ViewBag.ErrorMessage = "User doesn't exist.";
@@ -346,7 +339,7 @@ namespace Organiser.Controllers
             {
                 foreach (UserRole role in user.UserRoles)
                 {
-                    stringRolesList.Add(((Locations)role.Role).ToString());
+                    stringRolesList.Add(((Enums.Locations)role.Role).ToString());
                 }
             }
 
@@ -365,7 +358,7 @@ namespace Organiser.Controllers
             {
                 return Error("You need to be logged in as admin to do this.");
             }
-            var user = _userRepository.GetUserById(id);
+            var user = _unitOfWork.UserRepository.GetUserById(id);
 
             if (user == null)
             {
@@ -383,19 +376,19 @@ namespace Organiser.Controllers
                 return Error("You need to be logged in as admin to do this.");
             }
 
-            if (_userRepository.UserExists(id))
+            if (_unitOfWork.UserRepository.UserExists(id))
             {
 
-                var user = _appDbContext.Users.FirstOrDefault(u => u.UserId == id);
+                var user = _unitOfWork.UserRepository.Find(u => u.UserId == id).FirstOrDefault();
                 if (HttpContext.User.Identity.Name == user.UserName)
                 {
                     return Error("You can not delete your own user.");
                 }
-                _appDbContext.Users.Remove(user);
-                _appDbContext.SaveChanges();
+                _unitOfWork.UserRepository.Remove(user);
+                _unitOfWork.Complete();
                 TempData["success"] = "User (" + user.UserName + ") was successfully deleted!";
 
-                _logRepository.CreateLog(
+                _unitOfWork.LogRepository.CreateLog(
                 HttpContext.User.Identity.Name,
                 "Deleted a user. With user name: [" + user.UserName + "].",
                 DateTime.Now,
@@ -439,7 +432,7 @@ namespace Organiser.Controllers
         private bool UserIsAdmin()
         {
             string UserName = HttpContext.User.Identity.Name;
-            return _userRepository.IsAdmin(UserName);
+            return _unitOfWork.UserRepository.IsAdmin(UserName);
         }
         private void BuildUserEntity(UsersCreateUpdateViewModel model, ref User user)
         {
