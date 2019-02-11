@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using Organiser.Data.EnumType;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace Organiser.Actions
 {
@@ -23,7 +25,7 @@ namespace Organiser.Actions
         {
             using (_unitOfWork)
             {
-                var user = _unitOfWork.UserRepository.GetUserByNameAndPassword(userName, password);
+                var user = _unitOfWork.UserRepository.GetUserByNameAndPassword(userName, Hash(password));
                 bool userExists = user != null;
                 ClaimsPrincipal principal = new ClaimsPrincipal();
                 if (userExists)
@@ -56,6 +58,13 @@ namespace Organiser.Actions
                 return new LoginActionObject { UserExists = userExists, ClaimsObject = principal };
             }
 
+        }
+        private string Hash(string inputString)
+        {
+            byte[] data = Encoding.ASCII.GetBytes(inputString);
+            data = new SHA256Managed().ComputeHash(data);
+            string hash = Encoding.ASCII.GetString(data);
+            return hash;
         }
     }
 }

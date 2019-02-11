@@ -2,19 +2,21 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Organiser.Actions;
+using Organiser.Actions.ActionObjects;
+using Organiser.Data.EnumType;
 using Organiser.Data.Models;
+using Organiser.Data.UnitOfWork;
 using Organiser.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Organiser.Controllers.HelperMethods;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Organiser.Actions;
-using Organiser.Actions.ActionObjects;
-using Organiser.Data.EnumType;
-using Organiser.Data.UnitOfWork;
+using static Organiser.Controllers.HelperMethods;
 
 namespace Organiser.Controllers
 {
@@ -79,6 +81,8 @@ namespace Organiser.Controllers
                 return View(model);
             }
 
+
+
             LoginActionObject loginActionObj = _accountActions.Login(model.UserName, model.Password);
 
             if (loginActionObj.UserExists)
@@ -108,7 +112,7 @@ namespace Organiser.Controllers
             UsersCreateUpdateViewModel model = new UsersCreateUpdateViewModel();
             model.RoleDropDown = RoleDefaults();
 
-            model.Roles = Enumerable.Range(0, model.RoleDropDowns.Count).Select(x=> 0).ToList();
+            model.Roles = Enumerable.Range(0, model.RoleDropDown.Count).Select(x => 0).ToList();
 
             if (User.IsInRole("admin"))
             {
@@ -161,6 +165,7 @@ namespace Organiser.Controllers
                     {
                         user.UserRoles = CreateUserRoles(roleList);
                     }
+                    user.Password = Hash(user.Password);
                     _unitOfWork.UserRepository.Add(user);
                     await _unitOfWork.CompleteAsync();
 
@@ -178,7 +183,8 @@ namespace Organiser.Controllers
                     return View("Error");
                 }
 
-            }        }
+            }
+        }
 
 
         [HttpGet]
@@ -261,7 +267,7 @@ namespace Organiser.Controllers
             if (user.UserRoles.Count > 0)
             {
                 _unitOfWork.UserRoleRepository.RemoveRange(user.UserRoles);
-               await _unitOfWork.CompleteAsync();
+                await _unitOfWork.CompleteAsync();
             }
 
             if (roleList.Count > 0)
@@ -271,6 +277,7 @@ namespace Organiser.Controllers
 
             try
             {
+                user.Password = Hash(user.Password);
                 _unitOfWork.Update(user);
                 await _unitOfWork.CompleteAsync();
             }
@@ -298,11 +305,11 @@ namespace Organiser.Controllers
         {
             for (int i = 0; i < updatedRoles.Count; i++)
             {
-                if (updatedRoles.Count-1 < i)
+                if (updatedRoles.Count - 1 < i)
                 {
                     user.UserRoles[i] = null;
                 }
-                else if(user.UserRoles[i] != null)
+                else if (user.UserRoles[i] != null)
                 {
                     user.UserRoles[i].Role = updatedRoles[i];
                 }
@@ -481,6 +488,12 @@ namespace Organiser.Controllers
             ViewBag.ErrorMessage = errorMessage;
             return View("Error");
         }
-
+        private string Hash(string inputString)
+        {
+            byte[] data = Encoding.ASCII.GetBytes(inputString);
+            data = new SHA256Managed().ComputeHash(data);
+            string hash = Encoding.ASCII.GetString(data);
+            return hash;
+        }
     }
 }
