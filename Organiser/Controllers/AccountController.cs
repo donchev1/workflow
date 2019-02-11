@@ -129,60 +129,39 @@ namespace Organiser.Controllers
         public async Task<IActionResult> Create(
         [Bind("UserEntity, Roles")] UsersCreateUpdateViewModel model)
         {
-            using (_unitOfWork)
+            if (!ModelState.IsValid)
             {
-                if (!UserIsAdmin())
-                {
-                    return Error("You need to be logged in as admin to do this.");
-                }
+                model.RoleDropDown = RoleDefaults();
+                return View(model);
+            }
+            if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
+            {
+                model.RoleDropDown = RoleDefaults();
+                ViewBag.errorMessage = "Password and Confirm Password fields must match!";
+                return View(model);
+            }
 
-                if (!ModelState.IsValid)
-                {
-                    model.RoleDropDown = RoleDefaults();
-                    return View(model);
-                }
-
-
-                if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
-                {
-                    model.RoleDropDown = RoleDefaults();
-                    ViewBag.errorMessage = "Password and Confirm Password fields must match!";
-                    return View(model);
-                }
-                else if (_unitOfWork.UserRepository.GetUserByName(model.UserEntity.UserName) != null)
-                {
-                    model.RoleDropDown = RoleDefaults();
-                    ViewBag.errorMessage = "A user with the same user name already exists!";
-                    return View(model);
-                }
-                try
-                {
-                    var roleList = model.Roles.Where(x => x != null)?.Distinct()?.ToList();
-                    User user = new User();
-                    BuildUserEntity(model, ref user);
-
-                    if (roleList.Count > 0)
-                    {
-                        user.UserRoles = CreateUserRoles(roleList);
-                    }
-                    user.Password = Hash(user.Password);
-                    _unitOfWork.UserRepository.Add(user);
-                    await _unitOfWork.CompleteAsync();
-
-                    _unitOfWork.LogRepository.CreateLog(
-                      HttpContext.User.Identity.Name,
-                      "Created a user. With user name: [" + user.UserName + "].",
-                      DateTime.Now,
-                      null);
-                    TempData["success"] = "User created.";
-                    return RedirectToAction("Index");
-                }
-                catch (Exception ex)
-                {
-                    ViewBag.ErrorMessage = ex;
-                    return View("Error");
-                }
-
+            string _userName = HttpContext.User.Identity.Name;
+            CreateActionObject _actionObject = _accountActions.Create(_userName, model);
+            if (!_actionObject.UserIsAdmin)
+            {
+                return Error("You need to be logged in as admin to do this.");
+            }
+            else if (!_actionObject.UserCreated)
+            {
+                model.RoleDropDown = RoleDefaults();
+                ViewBag.errorMessage = _actionObject.ErrorMessage;
+                return View(model);
+            }
+            if (_actionObject.UserCreated)
+            {
+                TempData["success"] = "User created.";
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                TempData["error"] = "Oops, something went wrong, try again.";
+                return RedirectToAction("Index");
             }
         }
 

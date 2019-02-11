@@ -8,6 +8,9 @@ using System.Security.Claims;
 using Organiser.Data.EnumType;
 using System.Text;
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Http;
+using Organiser.ViewModels;
+using System.Linq;
 
 namespace Organiser.Actions
 {
@@ -19,6 +22,50 @@ namespace Organiser.Actions
         public AccountActions(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+        }
+        private bool UserIsAdmin(string userName)
+        {
+            return _unitOfWork.UserRepository.IsAdmin(userName);
+        }
+        public CreateActionObject Create(string currentUserName, UsersCreateUpdateViewModel createViewModel)
+        {
+            using (_unitOfWork)
+            {
+                CreateActionObject _actionObject = new CreateActionObject();
+                _actionObject.UserIsAdmin = UserIsAdmin(currentUserName);
+                if (!_actionObject.UserIsAdmin)
+                {
+                    return _actionObject;
+                }
+
+                if (_unitOfWork.UserRepository.GetUserByName(createViewModel.UserEntity.UserName) != null)
+                {
+                    _actionObject.UserCreated = false;
+                    _actionObject.ErrorMessage = "A user with the same user name already exists!";
+                    return _actionObject;
+                }
+
+                var roleList = createViewModel.Roles.Where(x => x != null)?.Distinct()?.ToList();
+                User user = new User();
+                BuildUserEntity(createViewModel, ref user);
+
+                if (roleList.Count > 0)
+                {
+                    user.UserRoles = CreateUserRoles(user, roleList);
+                }
+                user.Password = Hash(user.Password);
+                _unitOfWork.UserRepository.Add(user);
+                _unitOfWork.CompleteAsync();
+
+                _unitOfWork.LogRepository.CreateLog(
+                  currentUserName,
+                  "Created a user. With user name: [" + user.UserName + "].",
+                  DateTime.Now,
+                  null);
+
+                _actionObject.UserCreated = true;
+                return _actionObject;
+            }
         }
 
         public LoginActionObject Login(string userName, string password)
@@ -65,6 +112,27 @@ namespace Organiser.Actions
             data = new SHA256Managed().ComputeHash(data);
             string hash = Encoding.ASCII.GetString(data);
             return hash;
+        }
+        private List<UserRole> CreateUserRoles(User user, List<int> userRoles)
+        {
+            List<UserRole> newUserRoles = new List<UserRole>();
+            foreach (int ur in userRoles)
+            {
+                newUserRoles.Add(new UserRole
+                {
+                    UserId = user.UserId,
+                    Role = ur
+                });
+            }
+            return newUserRoles;
+        }
+        private void BuildUserEntity(UsersCreateUpdateViewModel model, ref User user)
+        {
+            user.UserId = model.UserEntity.UserId;
+            user.UserName = model.UserEntity.UserName;
+            user.Password = model.UserEntity.Password;
+            user.ConfirmPassword = model.UserEntity.ConfirmPassword;
+            user.IsAdmin = model.UserEntity.IsAdmin;
         }
     }
 }
