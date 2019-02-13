@@ -27,7 +27,13 @@ namespace Organiser.Actions
         {
             return _unitOfWork.UserRepository.IsAdmin(userName);
         }
-        public CreateActionObject Create(string currentUserName, UsersCreateUpdateViewModel createViewModel)
+
+        public IEnumerable<User> Index()
+        {
+            return _unitOfWork.UserRepository.GetAllUsersWithUserRoles();
+        }
+
+        public CreateActionObject CreatePost(string currentUserName, UsersCreateUpdateViewModel createViewModel)
         {
             using (_unitOfWork)
             {
@@ -55,13 +61,13 @@ namespace Organiser.Actions
                 }
                 user.Password = Hash(user.Password);
                 _unitOfWork.UserRepository.Add(user);
-                _unitOfWork.CompleteAsync();
 
                 _unitOfWork.LogRepository.CreateLog(
                   currentUserName,
                   "Created a user. With user name: [" + user.UserName + "].",
                   DateTime.Now,
                   null);
+                _unitOfWork.Complete();
 
                 _actionObject.UserCreated = true;
                 return _actionObject;
@@ -72,7 +78,7 @@ namespace Organiser.Actions
         {
             using (_unitOfWork)
             {
-                var user = _unitOfWork.UserRepository.GetUserByNameAndPassword(userName, Hash(password));
+                var user = _unitOfWork.UserRepository.GetUserByNameAndPassword(userName, password);
                 bool userExists = user != null;
                 ClaimsPrincipal principal = new ClaimsPrincipal();
                 if (userExists)
@@ -134,5 +140,7 @@ namespace Organiser.Actions
             user.ConfirmPassword = model.UserEntity.ConfirmPassword;
             user.IsAdmin = model.UserEntity.IsAdmin;
         }
+
+      
     }
 }

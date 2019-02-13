@@ -1,4 +1,5 @@
 ﻿using Organiser.Actions.ActionObjects;
+using Organiser.Data.Models;
 using Organiser.ViewModels;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace Organiser.Actions
     public interface IAccountActions
     {
         LoginActionObject Login(string userName, string password);
-        CreateActionObject Create(string userName, UsersCreateUpdateViewModel createViewModel);
-
+        CreateActionObject CreatePost(string userName, UsersCreateUpdateViewModel createViewModel);
+        IEnumerable<User> Index();
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -33,32 +34,30 @@ namespace Organiser.Controllers
         [Authorize]
         public IActionResult Index()
         {
-            if (UserIsAdmin())
-            {
-                UsersViewModel model = new UsersViewModel();
-                IEnumerable<User> users;
-                users = _unitOfWork.UserRepository.GetAllUsersWithUserRoles();
-                foreach (User user in users)
-                {
-                    user.UserRolesDropdown = new List<SelectListItem>();
-                    List<string> userStringRoles = new List<string>();
-                    foreach (UserRole role in user.UserRoles)
-                    {
-                        userStringRoles.Add(((Enums.Department)role.Role).ToString());
-                    }
-                    user.UserRoles = null;
-                    user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
-                }
-
-                return View(new UsersViewModel
-                {
-                    Users = users,
-                });
-            }
-            else
+            if (!User.IsInRole("admin"))
             {
                 return Error("You need to be logged in as admin to do this.");
             }
+         
+            UsersViewModel model = new UsersViewModel();
+            IEnumerable<User> users;
+            users = _unitOfWork.UserRepository.GetAllUsersWithUserRoles();
+            foreach (User user in users)
+            {
+                user.UserRolesDropdown = new List<SelectListItem>();
+                List<string> userStringRoles = new List<string>();
+                foreach (UserRole role in user.UserRoles)
+                {
+                    userStringRoles.Add(((Enums.Department)role.Role).ToString());
+                }
+                user.UserRoles = null;
+                user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
+            }
+
+            return View(new UsersViewModel
+            {
+                Users = Mapper.Map<IEnumerable<UserViewModel>>(users),
+            });
         }
 
         [HttpGet]
@@ -80,8 +79,6 @@ namespace Organiser.Controllers
             {
                 return View(model);
             }
-
-
 
             LoginActionObject loginActionObj = _accountActions.Login(model.UserName, model.Password);
 
@@ -142,7 +139,7 @@ namespace Organiser.Controllers
             }
 
             string _userName = HttpContext.User.Identity.Name;
-            CreateActionObject _actionObject = _accountActions.Create(_userName, model);
+            CreateActionObject _actionObject = _accountActions.CreatePost(_userName, model);
             if (!_actionObject.UserIsAdmin)
             {
                 return Error("You need to be logged in as admin to do this.");
@@ -331,7 +328,7 @@ namespace Organiser.Controllers
 
             return View(new UsersViewModel
             {
-                UserDetails = user,
+                UserDetails = Mapper.Map<UserViewModel>(user),
                 UserRoles = stringRolesList
             });
         }

@@ -11,6 +11,8 @@ using Organiser.Actions;
 using Organiser.Data;
 using Organiser.Data.Context;
 using Organiser.Data.UnitOfWork;
+using AutoMapper;
+using Organiser.ViewModels;
 
 namespace Organiser
 {
@@ -27,6 +29,11 @@ namespace Organiser
         public void ConfigureServices(IServiceCollection services)
         {
            var connection = Configuration.GetSection("ConnectionStrings").GetSection("OrganiserData").Value;
+
+            Mapper.Initialize(cfg =>
+            {
+                cfg.CreateMap<User, UserViewModel>();
+            });
 
             services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(connection));
