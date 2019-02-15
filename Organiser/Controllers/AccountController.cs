@@ -64,6 +64,7 @@ namespace Organiser.Controllers
         [HttpGet]
         public IActionResult Login(string returnUrl = null)
         {
+            
             if (User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Order");
@@ -417,8 +418,7 @@ namespace Organiser.Controllers
 
         private bool UserIsAdmin()
         {
-            string UserName = HttpContext.User.Identity.Name;
-            return _unitOfWork.UserRepository.IsAdmin(UserName);
+            return User.IsInRole("admin");
         }
         private void BuildUserEntity(UsersCreateUpdateViewModel model, ref User user)
         {

@@ -104,8 +104,8 @@ namespace Organiser.Actions
                 }
                 return new LoginActionObject { UserExists = userExists, ClaimsObject = principal };
             }
-
         }
+
         private string Hash(string inputString)
         {
             byte[] data = Encoding.ASCII.GetBytes(inputString);
@@ -113,6 +113,7 @@ namespace Organiser.Actions
             string hash = Encoding.ASCII.GetString(data);
             return hash;
         }
+
         private List<UserRole> CreateUserRoles(User user, List<int> userRoles)
         {
             List<UserRole> newUserRoles = new List<UserRole>();
