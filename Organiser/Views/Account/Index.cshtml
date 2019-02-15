@@ -13,7 +13,7 @@
     <a class="btn btn-primary" asp-action="Create">Create New</a>
 </div>
 <hr />
-<table class="centralised tableCellRightBorder trHighlightOnHover">
+<table class="centralised tableCellRightBorder trHighlightOnHover striped">
     <tr>
         <th>User name</th>
         <th>Password</th>
@@ -30,10 +30,6 @@
 
         <tr>
             <td>@user.UserName</td>
-            <td class="passwordCell" id="@count">
-                <input type="password" disabled value="@user.Password" id="pass_@count" onclick="myFunction(@count)">
-                <input type="checkbox" onclick="myFunction(@count)">
-            </td>
             <td>
                 @if (user.IsAdmin)
                 {
@@ -58,15 +54,3 @@
         </tr>
     }
 </table>
-
-
-<script>
-    function myFunction(count) {
-        var x = document.getElementById("pass_" + count);
-        if (x.type === "password") {
-            x.type = "text";
-        } else {
-            x.type = "password";
-        }
-    }
-</script>

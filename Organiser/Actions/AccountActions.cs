@@ -78,7 +78,7 @@ namespace Organiser.Actions
         {
             using (_unitOfWork)
             {
-                var user = _unitOfWork.UserRepository.GetUserByNameAndPassword(userName, password);
+                var user = _unitOfWork.UserRepository.GetUserByNameAndPassword(userName, Hash(password));
                 bool userExists = user != null;
                 ClaimsPrincipal principal = new ClaimsPrincipal();
                 if (userExists)

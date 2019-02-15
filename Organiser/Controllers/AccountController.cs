@@ -54,9 +54,15 @@ namespace Organiser.Controllers
                 user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
             }
 
+            List<UserViewModel> _userViewModelList = new List<UserViewModel>();
+            foreach (var user in users)
+            {
+                _userViewModelList.Add(Mapper.Map<UserViewModel>(user));
+            }
+            
             return View(new UsersViewModel
             {
-                Users = Mapper.Map<IEnumerable<UserViewModel>>(users),
+                Users = _userViewModelList
             });
         }
 
