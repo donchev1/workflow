@@ -11,7 +11,13 @@ namespace Organiser.Actions
     public interface IAccountActions
     {
         LoginActionObject Login(string userName, string password);
-        CreateActionObject CreatePost(string userName, UsersCreateUpdateViewModel createViewModel);
-        IEnumerable<User> Index();
+        CreateObject CreatePost(string userName, UsersCreateUpdateViewModel createViewModel);
+        UsersViewModel IndexAction();
+        void Logout(string userName);
+        User EditGet(int id);
+        Task<AccountActionObject> EditPost(UsersCreateUpdateViewModel model, string currentUserName);
+        User Details(int id);
+        User DeleteGet(int id);
+        AccountActionObject DeleteConfirmed(int userId, string currentUserName);
     }
 }

@@ -11,6 +11,9 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Http;
 using Organiser.ViewModels;
 using System.Linq;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Threading.Tasks;
 
 namespace Organiser.Actions
 {
@@ -28,16 +31,139 @@ namespace Organiser.Actions
             return _unitOfWork.UserRepository.IsAdmin(userName);
         }
 
-        public IEnumerable<User> Index()
+        public User DeleteGet(int id)
         {
-            return _unitOfWork.UserRepository.GetAllUsersWithUserRoles();
+            return _unitOfWork.UserRepository.GetUserById(id);
         }
 
-        public CreateActionObject CreatePost(string currentUserName, UsersCreateUpdateViewModel createViewModel)
+        public AccountActionObject DeleteConfirmed(int userId, string currentUserName)
+        {
+            AccountActionObject _actionObject = new AccountActionObject(); 
+            if (_unitOfWork.UserRepository.UserExists(userId))
+            {
+
+                var user = _unitOfWork.UserRepository.Find(u => u.UserId == userId).FirstOrDefault();
+                if (currentUserName == user.UserName)
+                {
+                    _actionObject.Success = false;
+                    _actionObject.RedirectToError = true;
+                    _actionObject.ErrorMessage ="You can not delete your own user.";
+                }
+                else
+                {
+                    _unitOfWork.UserRepository.Remove(user);
+                    _unitOfWork.LogRepository.CreateLog(
+                    currentUserName,
+                    "Deleted a user. With user name: [" + user.UserName + "].",
+                    DateTime.Now,
+                    null);
+                }
+
+            }
+            else
+            {
+                _actionObject.Success = false;
+                _actionObject.RedirectToError = true;
+                _actionObject.ErrorMessage = "User doesn't exist";
+            }
+            _unitOfWork.Complete();
+            return _actionObject;
+        }
+
+        public void Logout(string userName)
+        {
+            _unitOfWork.LogRepository.CreateLog(
+                userName,
+                "Logged out.",
+                DateTime.Now,
+                null);
+        }
+
+        public User Details(int id)
+        {
+            return _unitOfWork.UserRepository.GetUserAndRolesById(id);
+
+        }
+
+        public User EditGet(int id)
+        {
+            return _unitOfWork.UserRepository.GetUserAndRolesById(id);
+        }
+
+        public async Task<AccountActionObject> EditPost(UsersCreateUpdateViewModel model, string currentUserName)
+        {
+            AccountActionObject _actionObject = new AccountActionObject();
+            if (!_unitOfWork.UserRepository.UserExists(model.UserEntity.UserId))
+            {
+                _actionObject.Success = false;
+                _actionObject.ErrorMessage = "User with user id " + model.UserEntity.UserId.ToString() + " doesn't exist. Please refresh the page.";
+                return _actionObject;
+            }
+
+            User user = _unitOfWork.UserRepository.GetUserAndRolesById(model.UserEntity.UserId);
+            BuildUserEntity(model, ref user);
+
+
+            List<int> roleList = model.Roles.Where(x => x != 0).Distinct().ToList();
+
+            if (user.UserRoles.Count > 0)
+            {
+                _unitOfWork.UserRoleRepository.RemoveRange(user.UserRoles);
+                await _unitOfWork.CompleteAsync();
+            }
+
+            if (roleList.Count > 0)
+            {
+                user.UserRoles = CreateUserRoles(user, roleList);
+            }
+
+
+            user.Password = Hash(user.Password);
+            _unitOfWork.Update(user);
+
+            _unitOfWork.LogRepository.CreateLog(
+                currentUserName,
+                "User edited  with user name: [" + user.UserName + "].",
+                DateTime.Now,
+                null);
+            await _unitOfWork.CompleteAsync();
+
+            return _actionObject;
+        }
+
+        public UsersViewModel IndexAction()
+        {
+            UsersViewModel model = new UsersViewModel();
+            IEnumerable<User> users;
+            users = _unitOfWork.UserRepository.GetAllUsersWithUserRoles();
+            foreach (User user in users)
+            {
+                user.UserRolesDropdown = new List<SelectListItem>();
+                List<string> userStringRoles = new List<string>();
+                foreach (UserRole role in user.UserRoles)
+                {
+                    userStringRoles.Add(((Enums.Department)role.Role).ToString());
+                }
+                user.UserRoles = null;
+                user.UserRolesDropdown = HelperMethods.DisplayUserRolesDropDown(userStringRoles);
+            }
+
+            List<UserViewModel> _userViewModelList = new List<UserViewModel>();
+            foreach (var user in users)
+            {
+                _userViewModelList.Add(Mapper.Map<UserViewModel>(user));
+            }
+            return new UsersViewModel
+            {
+                Users = _userViewModelList
+            };
+        }
+
+        public CreateObject CreatePost(string currentUserName, UsersCreateUpdateViewModel createViewModel)
         {
             using (_unitOfWork)
             {
-                CreateActionObject _actionObject = new CreateActionObject();
+                CreateObject _actionObject = new CreateObject();
                 _actionObject.UserIsAdmin = UserIsAdmin(currentUserName);
                 if (!_actionObject.UserIsAdmin)
                 {

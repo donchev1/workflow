@@ -13,10 +13,10 @@
     <a class="btn btn-primary" asp-action="Create">Create New</a>
 </div>
 <hr />
-<table class="centralised tableCellRightBorder trHighlightOnHover striped">
+@*tableCellRightBorder*@
+<table class="centralised  trHighlightOnHover striped">
     <tr>
         <th>User name</th>
-        <th>Password</th>
         <th>Admin?</th>
         <th>Role List</th>
     </tr>
@@ -47,7 +47,7 @@
                 <a class="btn btn-primary" asp-action="Edit" asp-route-id="@user.UserId">Edit</a>
                 @if (user.UserName != User.Identity.Name)
                 {
-                @twoLines
+                    @twoLines
                     <a class="btn btn-danger" asp-action="Delete" asp-route-id="@user.UserId">Delete</a>
                 }
             </td>

@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using Organiser.Actions;
 using Organiser.Actions.ActionObjects;
 using Organiser.Data.EnumType;
@@ -24,57 +23,33 @@ namespace Organiser.Controllers
     public class AccountController : Controller
     {
         private IAccountActions _accountActions;
-        private IUnitOfWork _unitOfWork;
         public AccountController(IAccountActions accountActions, IUnitOfWork unitOfWork)
         {
             _accountActions = accountActions;
-            _unitOfWork = unitOfWork;
         }
 
         [Authorize]
         public IActionResult Index()
         {
-            if (!User.IsInRole("admin"))
+            UsersViewModel _viewModel = _accountActions.IndexAction();
+
+            if (!UserIsAdmin())
             {
                 return Error("You need to be logged in as admin to do this.");
             }
-         
-            UsersViewModel model = new UsersViewModel();
-            IEnumerable<User> users;
-            users = _unitOfWork.UserRepository.GetAllUsersWithUserRoles();
-            foreach (User user in users)
-            {
-                user.UserRolesDropdown = new List<SelectListItem>();
-                List<string> userStringRoles = new List<string>();
-                foreach (UserRole role in user.UserRoles)
-                {
-                    userStringRoles.Add(((Enums.Department)role.Role).ToString());
-                }
-                user.UserRoles = null;
-                user.UserRolesDropdown = DisplayUserRolesDropDown(userStringRoles);
-            }
-
-            List<UserViewModel> _userViewModelList = new List<UserViewModel>();
-            foreach (var user in users)
-            {
-                _userViewModelList.Add(Mapper.Map<UserViewModel>(user));
-            }
-            
-            return View(new UsersViewModel
-            {
-                Users = _userViewModelList
-            });
+            return View(_viewModel);
         }
 
         [HttpGet]
         public IActionResult Login(string returnUrl = null)
         {
-            
             if (User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Order");
             }
+
             ViewData["ReturnUrl"] = returnUrl;
+
             return View();
         }
 
@@ -118,7 +93,7 @@ namespace Organiser.Controllers
 
             model.Roles = Enumerable.Range(0, model.RoleDropDown.Count).Select(x => 0).ToList();
 
-            if (User.IsInRole("admin"))
+            if (UserIsAdmin())
             {
                 return View(model);
             }
@@ -146,7 +121,8 @@ namespace Organiser.Controllers
             }
 
             string _userName = HttpContext.User.Identity.Name;
-            CreateActionObject _actionObject = _accountActions.CreatePost(_userName, model);
+            CreateObject _actionObject = _accountActions.CreatePost(_userName, model);
+
             if (!_actionObject.UserIsAdmin)
             {
                 return Error("You need to be logged in as admin to do this.");
@@ -175,11 +151,7 @@ namespace Organiser.Controllers
         {
             string userName = HttpContext.User.Identity.Name;
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            _unitOfWork.LogRepository.CreateLog(
-                 userName,
-                 "Logged out.",
-                 DateTime.Now,
-                 null);
+            _accountActions.Logout(userName);
             return Redirect("/Account/Login");
         }
 
@@ -197,8 +169,7 @@ namespace Organiser.Controllers
                 return NotFound();
             }
             int idNotNull = (int)id;
-
-            User user = _unitOfWork.UserRepository.GetUserAndRolesById(idNotNull);
+            User user = _accountActions.EditGet(idNotNull);
             if (user == null)
             {
                 return Error("User with id " + id.ToString() + " doesn't exist.");
@@ -218,6 +189,12 @@ namespace Organiser.Controllers
                 return Error("You need to be logged in as admin to do this.");
             }
 
+            if (!ModelState.IsValid)
+            {
+                model.RoleDropDown = RoleDefaults();
+                return View(model);
+            }
+
             if (model.UserEntity.Password != model.UserEntity.ConfirmPassword)
             {
                 model.RoleDropDown = RoleDefaults();
@@ -225,62 +202,13 @@ namespace Organiser.Controllers
                 return View(model);
             }
 
-            if (!ModelState.IsValid)
-            {
-                model.RoleDropDown = RoleDefaults();
-                return View(model);
-            }
+            AccountActionObject _actionObject = await _accountActions.EditPost(model, User.Identity.Name);
 
-            if (!_unitOfWork.UserRepository.UserExists(model.UserEntity.UserId))
+            if(!_actionObject.Success)
             {
-                return Error("User with user id " + model.UserEntity.UserId.ToString() + " doesn't exist.");
+                return Error(_actionObject.ErrorMessage);
             }
-            if (_unitOfWork.UserRepository.GetUserByName(model.UserEntity.UserName) != null && _unitOfWork.UserRepository.GetUserByName(model.UserEntity.UserName).UserId != model.UserEntity.UserId)
-            {
-                model.RoleDropDown = RoleDefaults();
-                ViewBag.errorMessage = "A user with username " + model.UserEntity.UserName + " already exists.";
-                return View(model);
-            }
-            User user = _unitOfWork.UserRepository.GetUserAndRolesById(model.UserEntity.UserId);
-            BuildUserEntity(model, ref user);
-
-
-            List<int> roleList = model.Roles.Where(x => x != 0).Distinct().ToList();
-
-            if (user.UserRoles.Count > 0)
-            {
-                _unitOfWork.UserRoleRepository.RemoveRange(user.UserRoles);
-                await _unitOfWork.CompleteAsync();
-            }
-
-            if (roleList.Count > 0)
-            {
-                user.UserRoles = CreateUserRoles(user, roleList);
-            }
-
-            try
-            {
-                user.Password = Hash(user.Password);
-                _unitOfWork.Update(user);
-                await _unitOfWork.CompleteAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_unitOfWork.UserRepository.UserExists(user.UserId))
-                {
-                    return Error("Something went wront. Try again.");
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            _unitOfWork.LogRepository.CreateLog(
-                HttpContext.User.Identity.Name,
-                "Edited user with user name: [" + user.UserName + "].",
-                DateTime.Now,
-                null);
+           
             ViewBag.successMessage = "User details have been modified.";
             return RedirectToAction("Index");
         }
@@ -317,7 +245,8 @@ namespace Organiser.Controllers
                 return Error("You need to be logged in as admin to do this.");
             }
 
-            User user = _unitOfWork.UserRepository.GetUserAndRolesById(id);
+            User user = _accountActions.Details(id);
+
             if (user == null)
             {
                 ViewBag.ErrorMessage = "User doesn't exist.";
@@ -348,7 +277,7 @@ namespace Organiser.Controllers
             {
                 return Error("You need to be logged in as admin to do this.");
             }
-            var user = _unitOfWork.UserRepository.GetUserById(id);
+            User user = _accountActions.DeleteGet(id);
 
             if (user == null)
             {
@@ -365,32 +294,23 @@ namespace Organiser.Controllers
             {
                 return Error("You need to be logged in as admin to do this.");
             }
-
-            if (_unitOfWork.UserRepository.UserExists(id))
+            string _currentUserName = User.Identity.Name;
+            AccountActionObject _actionObject = _accountActions.DeleteConfirmed(id, _currentUserName);
+            if (!_actionObject.Success)
             {
-
-                var user = _unitOfWork.UserRepository.Find(u => u.UserId == id).FirstOrDefault();
-                if (HttpContext.User.Identity.Name == user.UserName)
+                if(_actionObject.RedirectToError)
                 {
-                    return Error("You can not delete your own user.");
+                    return Error(_actionObject.ErrorMessage);
                 }
-                _unitOfWork.UserRepository.Remove(user);
-                _unitOfWork.Complete();
-                TempData["success"] = "User (" + user.UserName + ") was successfully deleted!";
-
-                _unitOfWork.LogRepository.CreateLog(
-                HttpContext.User.Identity.Name,
-                "Deleted a user. With user name: [" + user.UserName + "].",
-                DateTime.Now,
-                null);
-
-                return RedirectToAction("Index");
+                else
+                {
+                    ViewBag.ErrorMessage(_actionObject.ErrorMessage);
+                }
             }
-            else
-            {
-                return NotFound();
-            }
+            TempData["success"] = "User (" + _currentUserName + ") was successfully deleted!";
+            return RedirectToAction("Index");
         }
+       
         [Obsolete]
         private List<int> roleOrganiser(List<int> roleNum)
         {
