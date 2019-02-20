@@ -49,7 +49,9 @@ namespace Organiser
                 options.AccessDeniedPath = new PathString("/Account/Login/");
                 options.LoginPath = new PathString("/Account/Login/");
             });
+
             services.AddTransient<IAccountActions, AccountActions>();
+            services.AddTransient<IOrderActions, OrderActions>();
             services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             services.Configure<IISOptions>(options =>

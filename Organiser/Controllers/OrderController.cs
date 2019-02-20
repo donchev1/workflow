@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Organiser.Actions;
 using Organiser.Data.EnumType;
 using Organiser.Data.Models;
 using Organiser.Data.UnitOfWork;
@@ -20,73 +21,27 @@ namespace Organiser.Controllers
     {
         public IHostingEnvironment _hostingEnvironment;
         public IUnitOfWork _unitOfWork;
-
-        public OrderController(IHostingEnvironment hostingEnv, IUnitOfWork unitOfWork)
+        public IOrderActions _orderActions;
+        public OrderController(IHostingEnvironment hostingEnv,
+            IUnitOfWork unitOfWork,
+            IOrderActions orderActions)
         {
             _hostingEnvironment = hostingEnv;
             _unitOfWork = unitOfWork;
+            _orderActions = orderActions;
         }
 
         [Authorize]
         public async Task<IActionResult> Index(int? page, string SearchID = "")
         {
-            using (_unitOfWork)
-            {
-                IQueryable<Order> orders;
-                int pageSize = 15;
-
-                if (SearchID != "" && SearchID != null)
-                {
-
-                    orders = _unitOfWork.OrderRepository.Find(o => o
-                        .OrderNumber
-                        .Contains(SearchID))
-                    .Include(or => or.DepartmentStates)
-                    .OrderByDescending(l => l.CreatedAt);
-
-                    return View(new OrderStateViewModel
-                    {
-                        OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize),
-                    });
-                }
-
-                orders = _unitOfWork.OrderRepository.GetAllToIQuerable().Include(x => x.DepartmentStates)
-                   .OrderByDescending(x => x.CreatedAt);
-
-                return View(new OrderStateViewModel
-                {
-                    OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
-                });
-            }
+            PaginatedList<Order> _orderList = await _orderActions.Index(page, SearchID);
+            return View(_orderList);
         }
 
         public async Task<IActionResult> AvailableWork(int locationNameNum, int? page)
         {
-            using (_unitOfWork)
-            {
-                int pageSize = 15;
-
-                //ToDo:Tino
-                IQueryable<Order> orders2 = _unitOfWork.OrderRepository.GetAvailableOrdersForWork(locationNameNum);
-                IQueryable<Order> orders = _unitOfWork.OrderRepository.Context.Orders.Where(o => o.Status == (StatusType.InProgress) || o.EntitiesNotProcessed > 0)
-                    .Include(o => o.DepartmentStates)
-                    .Where(o => (o.DepartmentStates.Any(ls =>
-                                     ls.Name == ((Data.EnumType.Enums.Department)locationNameNum).ToString() &&
-                                     o.EntitiesNotProcessed > 0 && o.DepartmentStates.Any(ls1 =>
-                                         ls1.Name == ((Enums.Department)locationNameNum).ToString() &&
-                                         ls1.LocationPosition == 1))
-                                 || o.DepartmentStates.Any(beforeLS =>
-                                     beforeLS.LocationPosition == o.DepartmentStates.FirstOrDefault(originalLS =>
-                                             originalLS.Name == ((Enums.Department)locationNameNum).ToString())
-                                         .LocationPosition - 1 && beforeLS.EntitiesRFC > 0)));
-                return View(new OrderStateViewModel
-                {
-                    LocationNameNum = locationNameNum,
-                    LocationName = ((Enums.Department)locationNameNum).ToString(),
-                    OrderListPaginated = await PaginatedList<Order>.CreateAsync(orders.AsNoTracking(), page ?? 1, pageSize)
-                });
-
-            }
+            OrderStateViewModel _model = await _orderActions.AvailableWork(locationNameNum, page);
+            return View(_model);
         }
 
 
@@ -95,18 +50,21 @@ namespace Organiser.Controllers
         [Authorize]
         public IActionResult Create()
         {
-            using (_unitOfWork)
+
+            if (!User.IsInRole("Orders"))
             {
-                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name,
-                    GetLocationIntValue("Orders")))
-                {
-                    return RedirectToAction("Logout", "Account");
-                }
-
-                TempData["Locations"] = LocationDefaults();
-                return View();
-
+                return Error("You don't have the necessary permissions to do this.");
             }
+            List<DepartmentState> _dStates = new List<DepartmentState>();
+            List<SelectListItem> _dStatesDefaults = LocationDefaults();
+            foreach (var ds in _dStatesDefaults)
+            {
+                _dStates.Add(new DepartmentState() { NameNum = 0 });
+            }
+
+            var _order = new Order() { DepartmentStates = _dStates };
+            TempData["Locations"] = _dStatesDefaults;
+            return View(_order);
         }
 
         // POST: Order/Create
@@ -115,65 +73,53 @@ namespace Organiser.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Customer, OrderId, OrderNumber, EntityType, EntityCount, DeadLineDate")] Order order,
-            int locname0, int locname1, int locname2, int locname3,
-            int locname4, int locname5, int locname6)
+        public async Task<IActionResult> Create(Order order)//[Bind("Customer, OrderId, OrderNumber, EntityType, EntityCount, DeadLineDate")] Order order)
         {
             if (ModelState.IsValid)
             {
-                try
+                using (_unitOfWork)
                 {
-                    using (_unitOfWork)
+                    if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name,
+                        GetLocationIntValue("Orders")))
+
                     {
-                        if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name,
-                            GetLocationIntValue("Orders")))
-
-                        {
-                            return RedirectToAction("Logout", "Account");
-                        }
-
-                        if (_unitOfWork.OrderRepository.Find(e => e.OrderNumber == order.OrderNumber).Any())
-                        {
-
-                            return Error("Error: order with order number " + order.OrderNumber + " already exists.");
-                        }
-
-                        List<int> DepartmentStatesUnorganised = new List<int>
-                            {locname0, locname1, locname2, locname3, locname4, locname5, locname6};
-
-                        order.CreatedAt = DateTime.Now;
-
-                        List<int> DepartmentStatesOrganised = DepartmentStateOrganiser(DepartmentStatesUnorganised);
-                        List<DepartmentState> DepartmentStateObjects = new List<DepartmentState>();
-
-                        if (DepartmentStatesOrganised.Count() > 0)
-                        {
-                            DepartmentStateObjects = CreateOrderDepartmentStates(DepartmentStatesOrganised, order);
-                        }
-                        else
-                        {
-                            DepartmentStatesOrganised.Add(7); //drivers
-                            DepartmentStateObjects = CreateOrderDepartmentStates(DepartmentStatesOrganised, order);
-                        }
-
-                        order.EntitiesNotProcessed = order.EntityCount;
-                        order.DepartmentStates = DepartmentStateObjects;
-                        order.Status = ((Enums.Statuses)1).ToString();
-                        _unitOfWork.OrderRepository.Add(order);
-                        await _unitOfWork.CompleteAsync();
-
-                        _unitOfWork.LogRepository.CreateLog(
-                            HttpContext.User.Identity.Name,
-                            "Order created.",
-                            DateTime.Now,
-                            order.OrderNumber);
-                        return RedirectToAction("Index");
+                        return RedirectToAction("Logout", "Account");
                     }
-                }
-                catch (Exception ex)
-                {
-                    ViewBag.ErrorMessage = ex;
-                    return View("Error");
+
+                    if (_unitOfWork.OrderRepository.Find(e => e.OrderNumber == order.OrderNumber).Any())
+                    {
+                        ViewBag.ErrorMessage = "Error: order with order number " + order.OrderNumber + " already exists.";
+                        TempData["Locations"] = LocationDefaults();
+                        return View(order);
+                    }
+
+
+                    order.CreatedAt = DateTime.Now;
+                    order.DepartmentStates = order.DepartmentStates.Where(x => x.NameNum != 0).ToList();
+                    List<DepartmentState> _departmentStates = new List<DepartmentState>();
+
+                    if (order.DepartmentStates.Any())
+                    {
+                        _departmentStates = CreateOrderDepartmentStates(order);
+                    }
+                    else
+                    {
+                        order.DepartmentStates.Add(new DepartmentState() { NameNum = 7 }); //drivers
+                        _departmentStates = CreateOrderDepartmentStates(order);
+                    }
+
+                    order.EntitiesNotProcessed = order.EntityCount;
+                    order.DepartmentStates = _departmentStates;
+                    order.Status = ((Enums.Statuses)1).ToString();
+                    _unitOfWork.OrderRepository.Add(order);
+                    await _unitOfWork.CompleteAsync();
+
+                    _unitOfWork.LogRepository.CreateLog(
+                        HttpContext.User.Identity.Name,
+                        "Order created.",
+                        DateTime.Now,
+                        order.OrderNumber);
+                    return RedirectToAction("Index");
                 }
             }
             TempData["Locations"] = LocationDefaults();
@@ -562,38 +508,23 @@ namespace Organiser.Controllers
         }
 
 
-        private List<DepartmentState> CreateOrderDepartmentStates(List<int> locations, Order order)
+        private List<DepartmentState> CreateOrderDepartmentStates(Order order)
         {
             List<DepartmentState> orderNewDepartmentStates = new List<DepartmentState>();
             int count = 0;
-            foreach (int l in locations)
+            foreach (var ds in order.DepartmentStates)
             {
+                ++count;
                 orderNewDepartmentStates.Add(new DepartmentState
                 {
-                    Name = ((Enums.Department)l).ToString(),
-                    LocationPosition = count + 1,
+                    Name = ((Enums.Department)ds.NameNum).ToString(),
+                    LocationPosition = count,
                     Status = ((Enums.Statuses)1).ToString(),
                     TotalEntityCount = order.EntityCount
                 });
-
-                ++count;
             }
             return orderNewDepartmentStates;
         }
-
-        private List<int> DepartmentStateOrganiser(List<int> DepartmentStates)
-        {
-            List<int> organisedList = new List<int>();
-            for (int i = 0; i < DepartmentStates.Count(); i++)
-            {
-                if (DepartmentStates[i] != 0)
-                {
-                    organisedList.Add(DepartmentStates[i]);
-                }
-            }
-            return organisedList;
-        }
-
         public IActionResult Error(string errorMessage)
         {
             ViewBag.ErrorMessage = errorMessage;

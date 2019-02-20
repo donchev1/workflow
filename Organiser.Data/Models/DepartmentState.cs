@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Organiser.Data.Models
 {
@@ -16,5 +17,7 @@ namespace Organiser.Data.Models
         public string Status { get; set; }
         public int OrderId { get; set; }
         public Order Order { get; set; }
+        [NotMapped]
+        public int NameNum { get; set; }
     }
 }

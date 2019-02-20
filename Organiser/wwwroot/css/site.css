@@ -86,7 +86,6 @@ table.ordersTable, td, th {
     color: black;
     white-space: nowrap;
     padding: 3px 8px 3px 8px;
-    /*background-color: grey;*/
 }
 
 .ordersTable tr, td, th {

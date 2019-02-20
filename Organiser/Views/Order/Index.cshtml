@@ -1,9 +1,10 @@
-@model OrderStateViewModel
+@using Organiser.Controllers;
+@model PaginatedList<Order>
 
 
 @{
     ViewData["Title"] = "Order List";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+ Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <br /><br />
@@ -28,40 +29,42 @@
         <th>Status</th>
         <th>Customer</th>
     </tr>
-    @foreach (var order in Model.OrderListPaginated)
+    @foreach (var order in Model)
     {
-    <tr class="orders">
-        <td>@order.OrderNumber</td>
-        <td>@order.EntityType</td>
-        <td>@order.EntityCount</td>
-        <td>@order.Status</td>
-        <td>@order.Customer</td>
-        <td>
-            <a class="btn btn-primary" href="/order/Details/@order.OrderId">Details</a>
-            @if (User.IsInRole("Orders"))
-            {
-                string twoLines = "  ||  ";
-                @twoLines<a class="btn btn-primary" href="order/Edit/@order.OrderId">Edit</a> @twoLines
-                <a class="btn btn-danger" href="order/Delete/@order.OrderId">Delete</a>
-            }
-        </td>
-    </tr>
+        <tr class="orders">
+            <td>@order.OrderNumber</td>
+            <td>@order.EntityType</td>
+            <td>@order.EntityCount</td>
+            <td>@order.Status</td>
+            <td>@order.Customer</td>
+            <td>
+                <a class="btn btn-primary" href="/order/Details/@order.OrderId">Details</a>
+                @if (User.IsInRole("Orders"))
+                {
+                    string twoLines = "  ||  ";
+                    @twoLines
+                    <a class="btn btn-primary" href="order/Edit/@order.OrderId">Edit</a>
+                    @twoLines
+                    <a class="btn btn-danger" href="order/Delete/@order.OrderId">Delete</a>
+                }
+            </td>
+        </tr>
     }
 </table>
 <br />
 @{
-    var prevDisabled = !Model.OrderListPaginated.HasPreviousPage ? "disabled" : "";
-    var nextDisabled = !Model.OrderListPaginated.HasNextPage ? "disabled" : "";
+    var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.HasNextPage ? "disabled" : "";
 }
 <div class="text-align-center">
 
     <a asp-action="Index"
-       asp-route-page="@(Model.OrderListPaginated.PageIndex - 1)"
+       asp-route-page="@(Model.PageIndex - 1)"
        class="btn btn-default @prevDisabled">
         Previous
     </a>
     <a asp-action="Index"
-       asp-route-page="@(Model.OrderListPaginated.PageIndex + 1)"
+       asp-route-page="@(Model.PageIndex + 1)"
        class="btn btn-default @nextDisabled">
         Next
     </a>
