@@ -202,7 +202,7 @@ namespace Organiser.Controllers
                 return View(model);
             }
 
-            AccountActionObject _actionObject = await _accountActions.EditPost(model, User.Identity.Name);
+            ActionObject _actionObject = await _accountActions.EditPost(model, User.Identity.Name);
 
             if(!_actionObject.Success)
             {
@@ -295,7 +295,7 @@ namespace Organiser.Controllers
                 return Error("You need to be logged in as admin to do this.");
             }
             string _currentUserName = User.Identity.Name;
-            AccountActionObject _actionObject = _accountActions.DeleteConfirmed(id, _currentUserName);
+            ActionObject _actionObject = _accountActions.DeleteConfirmed(id, _currentUserName);
             if (!_actionObject.Success)
             {
                 if(_actionObject.RedirectToError)

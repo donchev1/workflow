@@ -36,9 +36,9 @@ namespace Organiser.Actions
             return _unitOfWork.UserRepository.GetUserById(id);
         }
 
-        public AccountActionObject DeleteConfirmed(int userId, string currentUserName)
+        public ActionObject DeleteConfirmed(int userId, string currentUserName)
         {
-            AccountActionObject _actionObject = new AccountActionObject(); 
+            ActionObject _actionObject = new ActionObject(); 
             if (_unitOfWork.UserRepository.UserExists(userId))
             {
 
@@ -90,9 +90,9 @@ namespace Organiser.Actions
             return _unitOfWork.UserRepository.GetUserAndRolesById(id);
         }
 
-        public async Task<AccountActionObject> EditPost(UsersCreateUpdateViewModel model, string currentUserName)
+        public async Task<ActionObject> EditPost(UsersCreateUpdateViewModel model, string currentUserName)
         {
-            AccountActionObject _actionObject = new AccountActionObject();
+            ActionObject _actionObject = new ActionObject();
             if (!_unitOfWork.UserRepository.UserExists(model.UserEntity.UserId))
             {
                 _actionObject.Success = false;
