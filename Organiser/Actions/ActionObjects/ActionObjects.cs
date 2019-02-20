@@ -8,7 +8,7 @@ namespace Organiser.Actions.ActionObjects
     public class ActionObject
     {
         public bool Success { get; set; } = true;
-        public string ErrorMessage { get; set; }
+        public string Message { get; set; }
         public bool RedirectToError { get; set; }
     }
 }

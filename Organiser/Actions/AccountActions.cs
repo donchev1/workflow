@@ -47,7 +47,7 @@ namespace Organiser.Actions
                 {
                     _actionObject.Success = false;
                     _actionObject.RedirectToError = true;
-                    _actionObject.ErrorMessage ="You can not delete your own user.";
+                    _actionObject.Message ="You can not delete your own user.";
                 }
                 else
                 {
@@ -64,7 +64,7 @@ namespace Organiser.Actions
             {
                 _actionObject.Success = false;
                 _actionObject.RedirectToError = true;
-                _actionObject.ErrorMessage = "User doesn't exist";
+                _actionObject.Message = "User doesn't exist";
             }
             _unitOfWork.Complete();
             return _actionObject;
@@ -96,7 +96,7 @@ namespace Organiser.Actions
             if (!_unitOfWork.UserRepository.UserExists(model.UserEntity.UserId))
             {
                 _actionObject.Success = false;
-                _actionObject.ErrorMessage = "User with user id " + model.UserEntity.UserId.ToString() + " doesn't exist. Please refresh the page.";
+                _actionObject.Message = "User with user id " + model.UserEntity.UserId.ToString() + " doesn't exist. Please refresh the page.";
                 return _actionObject;
             }
 
@@ -173,7 +173,7 @@ namespace Organiser.Actions
                 if (_unitOfWork.UserRepository.GetUserByName(createViewModel.UserEntity.UserName) != null)
                 {
                     _actionObject.UserCreated = false;
-                    _actionObject.ErrorMessage = "A user with the same user name already exists!";
+                    _actionObject.Message = "A user with the same user name already exists!";
                     return _actionObject;
                 }
 

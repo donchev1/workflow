@@ -1,4 +1,5 @@
-﻿using Organiser.Controllers;
+﻿using Organiser.Actions.ActionObjects;
+using Organiser.Controllers;
 using Organiser.Data.Models;
 using Organiser.ViewModels;
 using System;
@@ -12,5 +13,8 @@ namespace Organiser.Actions
     {
         Task<PaginatedList<Order>> Index(int? page, string SearchID = "");
         Task<OrderStateViewModel> AvailableWork(int locationNameNum, int? page);
+        Task<ActionObject> CreatePost(Order order, string currentUserName);
+        Task<Order> EditGet(int? id);
+        ActionObject EditPost(Order order, string currentUserName));
     }
 }

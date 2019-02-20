@@ -36,7 +36,7 @@ namespace Organiser.Actions
                     {
                         Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
                         _actionObject.Success = false;
-                        _actionObject.ErrorMessage = "There are no event records related to order with order number: " + orderNumber;
+                        _actionObject.Message = "There are no event records related to order with order number: " + orderNumber;
                     }
                 }
                 else if (userName != null)
@@ -46,7 +46,7 @@ namespace Organiser.Actions
                     {
                         Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
                         _actionObject.Success = false;
-                        _actionObject.ErrorMessage = "There are no event records related to user with user name: " + userName;
+                        _actionObject.Message = "There are no event records related to user with user name: " + userName;
                     }
                 }
                 else

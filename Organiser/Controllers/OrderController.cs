@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Organiser.Actions;
+using Organiser.Actions.ActionObjects;
 using Organiser.Data.EnumType;
 using Organiser.Data.Models;
 using Organiser.Data.UnitOfWork;
@@ -73,57 +74,29 @@ namespace Organiser.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Order order)//[Bind("Customer, OrderId, OrderNumber, EntityType, EntityCount, DeadLineDate")] Order order)
+        public async Task<IActionResult> Create(Order order)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                using (_unitOfWork)
-                {
-                    if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name,
-                        GetLocationIntValue("Orders")))
-
-                    {
-                        return RedirectToAction("Logout", "Account");
-                    }
-
-                    if (_unitOfWork.OrderRepository.Find(e => e.OrderNumber == order.OrderNumber).Any())
-                    {
-                        ViewBag.ErrorMessage = "Error: order with order number " + order.OrderNumber + " already exists.";
-                        TempData["Locations"] = LocationDefaults();
-                        return View(order);
-                    }
-
-
-                    order.CreatedAt = DateTime.Now;
-                    order.DepartmentStates = order.DepartmentStates.Where(x => x.NameNum != 0).ToList();
-                    List<DepartmentState> _departmentStates = new List<DepartmentState>();
-
-                    if (order.DepartmentStates.Any())
-                    {
-                        _departmentStates = CreateOrderDepartmentStates(order);
-                    }
-                    else
-                    {
-                        order.DepartmentStates.Add(new DepartmentState() { NameNum = 7 }); //drivers
-                        _departmentStates = CreateOrderDepartmentStates(order);
-                    }
-
-                    order.EntitiesNotProcessed = order.EntityCount;
-                    order.DepartmentStates = _departmentStates;
-                    order.Status = ((Enums.Statuses)1).ToString();
-                    _unitOfWork.OrderRepository.Add(order);
-                    await _unitOfWork.CompleteAsync();
-
-                    _unitOfWork.LogRepository.CreateLog(
-                        HttpContext.User.Identity.Name,
-                        "Order created.",
-                        DateTime.Now,
-                        order.OrderNumber);
-                    return RedirectToAction("Index");
-                }
+                TempData["Locations"] = LocationDefaults();
+                return View("Create", order);
             }
-            TempData["Locations"] = LocationDefaults();
-            return View("Create", order);
+
+            if (User.IsInRole("Orders"))
+            {
+                return RedirectToAction("Logout", "Account");
+            }
+
+            ActionObject _actionObject = await _orderActions.CreatePost(order, User.Identity.Name);
+
+            if (!_actionObject.Success)
+            {
+                ViewBag.ErrorMessage = _actionObject.Message;
+                TempData["Locations"] = LocationDefaults();
+                return View(order);
+            }
+            TempData["success"] = _actionObject.Message;
+            return RedirectToAction("Index");
         }
 
         // GET: Order/Edit/5
@@ -135,7 +108,7 @@ namespace Organiser.Controllers
                 return Error("Order doesn't exist.");
             }
 
-            if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
+            if (User.IsInRole("Orders"))
             {
                 return RedirectToAction("Logout", "Account");
             }
@@ -153,88 +126,32 @@ namespace Organiser.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Customer, OrderId, OrderNumber, EntityType, Status")] Order order)
+        public async Task<IActionResult> Edit(Order order)
         {
-            using (_unitOfWork)
+
+            if (User.IsInRole("Orders"))
             {
+                return RedirectToAction("Logout", "Account");
+            }
 
-                if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue("Orders")))
-                {
-                    return RedirectToAction("Logout", "Account");
-                }
-
-                if (_unitOfWork.OrderRepository.Find(x => x.OrderNumber == order.OrderNumber).FirstOrDefault() is null
-                && _unitOfWork.OrderRepository.Find(x => x.OrderNumber == order.OrderNumber).FirstOrDefault().OrderId != order.OrderId)
-                {
-                    ViewBag.errorMessage =
-                        "Error: order with order number " + order.OrderNumber + " already exists.";
-                    //Tino:ToDo
-                    order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
-                    return View(order);
-                }
-
-                if (ModelState.IsValid)
-                {
-                    try
-                    {
-                        Order oldOrderState = _unitOfWork.OrderRepository.GetAllToIQuerable().Include(x => x.DepartmentStates)
-                            .FirstOrDefault(o => o.OrderId == order.OrderId);
-
-                        if (order.Status != oldOrderState.Status)
-                        {
-                            List<DepartmentState> newDepartmentStates = oldOrderState.DepartmentStates;
-                            if (order.Status == ((Enums.Statuses)3).ToString())
-                            {
-                                if (order.StartedAt == DateTime.MinValue)
-                                {
-                                    order.StartedAt = DateTime.Now;
-                                }
-
-                                order.FinshedAt = DateTime.Now;
-                                foreach (DepartmentState ls in newDepartmentStates)
-                                {
-                                    ls.Status = order.Status;
-                                    ls.EntitiesInProgress = 0;
-                                    ls.EntitiesRFC = 0;
-                                }
-                            }
-
-                            oldOrderState.EntitiesNotProcessed = 0;
-                            oldOrderState.DepartmentStates = newDepartmentStates;
-                        }
-
-                        UpdateOrderValues(ref oldOrderState, order);
-
-                        _unitOfWork.Update(oldOrderState);
-                        await _unitOfWork.CompleteAsync();
-                        _unitOfWork.LogRepository.CreateLog(
-                            HttpContext.User.Identity.Name,
-                            "Edited order.",
-                            DateTime.Now,
-                            order.OrderNumber);
-                    }
-                    catch (DbUpdateConcurrencyException)
-                    {
-                        using (_unitOfWork)
-                        {
-                            if (!_unitOfWork.OrderRepository.Find(o => o.OrderId == order.OrderId).Any())
-                            {
-                                return NotFound();
-                            }
-                            else
-                            {
-                                throw;
-                            }
-                        }
-                    }
-
-                    return RedirectToAction("Details", new { id = order.OrderId });
-                }
-
+            if (!ModelState.IsValid)
+            {
                 //Tino:ToDo
                 order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
                 return View(order);
             }
+            ActionObject _actionObject =  _orderActions.EditPost(order, User.Identity.Name);
+
+            if (!_actionObject.Success)
+            {
+                ViewBag.errorMessage = _actionObject.Message;
+                    
+                //Tino:ToDo
+                order.StatusDefaultsDropdown = StatusDefaults(GetStatusIntValue(order.Status));
+                return View(order);
+            }
+            TempData["success"] = _actionObject.Message;
+            return RedirectToAction("Details", new { id = order.OrderId });
         }
 
         [HttpPost]

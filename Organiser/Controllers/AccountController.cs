@@ -130,7 +130,7 @@ namespace Organiser.Controllers
             else if (!_actionObject.UserCreated)
             {
                 model.RoleDropDown = RoleDefaults();
-                ViewBag.errorMessage = _actionObject.ErrorMessage;
+                ViewBag.errorMessage = _actionObject.Message;
                 return View(model);
             }
             if (_actionObject.UserCreated)
@@ -206,7 +206,7 @@ namespace Organiser.Controllers
 
             if(!_actionObject.Success)
             {
-                return Error(_actionObject.ErrorMessage);
+                return Error(_actionObject.Message);
             }
            
             ViewBag.successMessage = "User details have been modified.";
@@ -300,11 +300,11 @@ namespace Organiser.Controllers
             {
                 if(_actionObject.RedirectToError)
                 {
-                    return Error(_actionObject.ErrorMessage);
+                    return Error(_actionObject.Message);
                 }
                 else
                 {
-                    ViewBag.ErrorMessage(_actionObject.ErrorMessage);
+                    ViewBag.ErrorMessage(_actionObject.Message);
                 }
             }
             TempData["success"] = "User (" + _currentUserName + ") was successfully deleted!";
