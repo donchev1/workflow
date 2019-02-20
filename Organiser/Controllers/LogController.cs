@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Organiser.Data.Context;
+using Organiser.Actions;
+using Organiser.Actions.ActionObjects;
 using Organiser.Data.Models;
 using Organiser.Data.UnitOfWork;
-using Organiser.Data.Models;
 using Organiser.ViewModels;
 using System;
 using System.Linq;
@@ -15,67 +15,27 @@ namespace Organiser.Controllers
     public class LogController : Controller
     {
         public IUnitOfWork _unitOfWork;
+        private readonly ILogActions _logActions;
 
-        public LogController( IUnitOfWork unitOfWork)
+        public LogController(ILogActions logActions, IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
+            _logActions = logActions;
         }
 
         [Authorize]
         public async Task<IActionResult> Index(string orderNumber, string userName, int? page, string message = "", int messageType = 0)
         {
-            using (_unitOfWork)
+            if (!UserIsAdmin())
             {
-
-                IQueryable<Log> Logs;
-
-
-                int pageSize = 20;
-                if (!UserIsAdmin())
-                {
-                    RedirectToAction("Index", "Order");
-                }
-
-                if (orderNumber != null)
-                {
-                    Logs = _unitOfWork.LogRepository.Find(x => x.OrderNumber == orderNumber);
-                    if (Logs == null)
-                    {
-                        Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
-                        ViewBag.errorMessage = "There are no event records related to order with order number: " + orderNumber;
-                    }
-                }
-                else if (userName != null)
-                {
-                    Logs = _unitOfWork.LogRepository.Find(x => x.UserName == userName);
-                    if (Logs == null)
-                    {
-                        Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
-                        ViewBag.errorMessage = "There are no event records related to user with user name: " + userName;
-                    }
-                }
-                else
-                {
-                    Logs = _unitOfWork.LogRepository.GetAllToIQuerable();
-                }
-
-                if (message != "")
-                {
-                    if (messageType == 1)
-                    {
-                        ViewBag.errorMessage = message;
-                    }
-                    else
-                    {
-                        ViewBag.successMessage = message;
-                    }
-                }
-
-                return View(new LogsViewModel()
-                {
-                    Logs = await PaginatedList<Log>.CreateAsync(Logs.AsNoTracking(), page ?? 1, pageSize)
-                });
+                Error("You don't have the right permissions to do this.");
             }
+            LogIndexActionObject _actionObject = await _logActions.Index(orderNumber, userName, page);
+
+            return View(new LogsViewModel()
+            {
+                Logs = _actionObject.LogList
+            });
         }
 
 
@@ -89,8 +49,8 @@ namespace Organiser.Controllers
             }
             if (eraseTo != DateTime.MinValue)
             {
-                    _unitOfWork.LogRepository.RemoveRange(x => x.CreatedAt < eraseTo );
-                    return RedirectToAction("Index", new { message = "Log context older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
+                _logActions.EraseLogs(eraseTo);
+                return RedirectToAction("Index", new { message = "Log context older than " + eraseTo.ToShortDateString() + " deleted.", messageType = 2 });
             }
             else
             {
@@ -100,9 +60,7 @@ namespace Organiser.Controllers
 
         private bool UserIsAdmin()
         {
-            string username = HttpContext.User.Identity.Name;
-                var user = _unitOfWork.UserRepository.Find((x => x.UserName == username));
-                return user.Select(x => x.IsAdmin == true).FirstOrDefault();
+            return User.IsInRole("admin");
         }
 
         private IActionResult Error(string errorMessage)

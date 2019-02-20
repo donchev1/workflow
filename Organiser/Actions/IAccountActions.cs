@@ -15,9 +15,9 @@ namespace Organiser.Actions
         UsersViewModel IndexAction();
         void Logout(string userName);
         User EditGet(int id);
-        Task<AccountActionObject> EditPost(UsersCreateUpdateViewModel model, string currentUserName);
+        Task<ActionObject> EditPost(UsersCreateUpdateViewModel model, string currentUserName);
         User Details(int id);
         User DeleteGet(int id);
-        AccountActionObject DeleteConfirmed(int userId, string currentUserName);
+        ActionObject DeleteConfirmed(int userId, string currentUserName);
     }
 }

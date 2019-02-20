@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Organiser.Data.EnumType;
 using static Organiser.Controllers.HelperMethods;
+using Organiser.Actions;
+using Organiser.Actions.ActionObjects;
 
 namespace Organiser.Controllers
 {
@@ -17,108 +19,41 @@ namespace Organiser.Controllers
     public class DepartmentStateController : Controller
     {
         private readonly IUnitOfWork _unitOfWork;
-
-        public DepartmentStateController(IUnitOfWork unitOfWork)
+        private readonly IDepartmentStateActions _depStateActions;
+        public DepartmentStateController(IDepartmentStateActions depStateActions, IUnitOfWork unitOfWork)
 
         {
+            _depStateActions = depStateActions;
             _unitOfWork = unitOfWork;
         }
 
         [Authorize]
         public Dictionary<string, string> MarkAsReady(EntityOrganiserViewModel model)
         {
+            Dictionary<string, string> result = new Dictionary<string, string>();
 
-            using (_unitOfWork)
+            if (!ModelState.IsValid)
             {
-                Dictionary<string, string> result = new Dictionary<string, string>();
-
-                if (!ModelState.IsValid)
-                {
-                    result.Add("MessageType", "Error");
-                    result.Add("Message", "Invalid selection. Please refresh the page and try again.");
-                    return result;
-                }
-
-
-
-                try
-                {
-                    var DepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateById(model.DepartmentStateId);
-
-                    if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(DepartmentState.Name)))
-                    {
-                        Error("Something went wrong, logout and log back in to fix the issue.");
-                    }
-
-                    var order = _unitOfWork.OrderRepository.GetById(DepartmentState.OrderId);
-                    string additionalMessage = "";
-
-                    if (DepartmentState.EntitiesInProgress < model.EntitiesPassed)
-                    {
-                        result.Add("MessageType", "Error");
-                        result.Add("Message", "There are only " + DepartmentState.EntitiesInProgress.ToString() + " entities in progress. Refresh the page.");
-                        return result;
-                    }
-
-                    DepartmentState.EntitiesRFC += model.EntitiesPassed;
-                    DepartmentState.EntitiesInProgress -= model.EntitiesPassed;
-                    DepartmentState.EntitiesPassed += model.EntitiesPassed;
-
-                    if (DepartmentState.TotalEntityCount == DepartmentState.EntitiesPassed)
-                    {
-                        DepartmentState.Status = ((Enums.Statuses)3).ToString();
-                        DepartmentState.Finish = DateTime.Now;
-                    }
-
-                    //TODO test this if statement
-
-                    if (_unitOfWork.DepartmentStateRepository.IsLastOrderDepartmentState(DepartmentState.OrderId, DepartmentState.DepartmentStateId))
-                    {
-                        order.EntitiesCompleted += model.EntitiesPassed;
-                        if (DepartmentState.EntitiesRFC == order.EntityCount)
-                        {
-                            order.FinshedAt = DateTime.Now;
-                            order.Status = ((Enums.Statuses)3).ToString();
-                            additionalMessage = "Order status: " + ((Enums.Statuses)3).ToString() + ".";
-                        }
-                        _unitOfWork.Update(order);
-
-
-                    }
-                    _unitOfWork.Update(DepartmentState);
-                    _unitOfWork.Complete();
-
-                    result.Add("MessageType", "Success");
-
-                    result.Add("Message", model.EntitiesPassed.ToString() +
-                        " entities successfully marked as ready for collection!" + additionalMessage);
-
-                    _unitOfWork.LogRepository.CreateLog(
-                      HttpContext.User.Identity.Name,
-                      "Marked " + model.EntitiesPassed.ToString() + " " + order.EntityType + " as ready for collection.",
-                      DateTime.Now,
-                      order.OrderNumber);
-
-                    return result;
-                }
-                catch (Exception)
-                {
-                    result.Add("MessageType", "Error");
-                    result.Add("Message", "Invalid selection. Please refresh the page and try again.");
-                    return result;
-                }
-
+                result.Add("MessageType", "Error");
+                result.Add("Message", "Invalid selection. Please refresh the page and try again.");
+                return result;
             }
+
+            MarkAsReadyActionObject _actionObject = _depStateActions.MarkAsReady(model, User.Identity.Name);
+            if (User.IsInRole(_actionObject.DepartmentState.Name))
+            {
+                Error("You don't have the necessary permissions to do that.");
+            }
+
+            return _actionObject.Result;
         }
 
         [Authorize]
         [HttpGet]
         public IActionResult MyWork(int DepartmentStateId, string errorType = "", string message = "", bool showMessages = false)
         {
-            string UserName = HttpContext.User.Identity.Name;
-            List<int> userRoles = _unitOfWork.UserRepository.GetUserRolesByUserName(UserName);
-
-            if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, DepartmentStateId))
+            
+            if (!User.IsInRole(((Enums.Department)DepartmentStateId).ToString()))
             {
                 return RedirectToAction("Logout", "Account");
             }
@@ -136,10 +71,9 @@ namespace Organiser.Controllers
                 }
             }
 
+            List<Order> _orderList = _depStateActions.MyWork(DepartmentStateId);
 
-            var orderList = _unitOfWork.OrderRepository.GetAllActiveOrdersForLocation(DepartmentStateId);
-
-            if (orderList.Count() < 1)
+            if (_orderList.Count() < 1)
             {
                 return View(new OrderStateViewModel
                 {
@@ -151,9 +85,9 @@ namespace Organiser.Controllers
 
             return View(new OrderStateViewModel
             {
-                LocationNameNum = GetLocationIntValue(orderList[0].DepartmentStates[0].Name),
-                LocationName = orderList[0].DepartmentStates[0].Name,
-                OrderList = orderList,
+                LocationNameNum = GetLocationIntValue(_orderList[0].DepartmentStates[0].Name),
+                LocationName = _orderList[0].DepartmentStates[0].Name,
+                OrderList = _orderList,
                 ShowMessages = showMessages
             });
         }
