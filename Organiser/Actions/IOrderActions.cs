@@ -15,6 +15,7 @@ namespace Organiser.Actions
         Task<OrderStateViewModel> AvailableWork(int locationNameNum, int? page);
         Task<ActionObject> CreatePost(Order order, string currentUserName);
         Task<Order> EditGet(int? id);
-        ActionObject EditPost(Order order, string currentUserName));
+        ActionObject EditPost(Order order, string currentUserName);
+        PassEntitiesActionObject PassEntities(IEnumerable<string> userRoles, string userName, EntityOrganiserViewModel model);
     }
 }

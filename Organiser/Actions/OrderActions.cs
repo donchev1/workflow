@@ -162,7 +162,53 @@ namespace Organiser.Actions
                 return _actionObject;
             }
         }
-        public void PassEntities() { }
+        public PassEntitiesActionObject PassEntities(IEnumerable<string> userRoles, string userName, EntityOrganiserViewModel model)
+        {
+            DepartmentState sourceDepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateById(model.DepartmentStateId);
+            DepartmentState targetDepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateByOrderIdAndLocNum(sourceDepartmentState.OrderId, sourceDepartmentState.LocationPosition + 1);
+            PassEntitiesActionObject _actionObject = new PassEntitiesActionObject();
+            if (!userRoles.Any(x => x == targetDepartmentState.Name))
+            {
+                _actionObject.Success = false;
+                _actionObject.Message = "Something went wrong, logout and log back in to fix the issue.";
+                _actionObject.RedirectToError = true;
+            }
+
+            if (sourceDepartmentState.EntitiesRFC >= model.EntitiesPassed)
+            {
+                sourceDepartmentState.EntitiesRFC -= model.EntitiesPassed;
+            }
+            else
+            {
+                _actionObject.Success = false;
+                _actionObject.Message = "Entity count insufficient.";
+                _actionObject.RedirectToError = true;
+            }
+
+            if (targetDepartmentState.Status == ((Enums.Statuses)1).ToString())
+            {
+                targetDepartmentState.Status = ((Enums.Statuses)2).ToString();
+                targetDepartmentState.Start = DateTime.Now;
+            }
+
+            targetDepartmentState.EntitiesInProgress += model.EntitiesPassed;
+
+            _unitOfWork.Update(sourceDepartmentState);
+            _unitOfWork.Update(targetDepartmentState);
+
+            _unitOfWork.Complete();
+            _unitOfWork.LogRepository.CreateLog(
+                        userName,
+                        "Moved " + model.EntitiesPassed.ToString() + " " + _unitOfWork.OrderRepository.Find(x => x.OrderId == sourceDepartmentState.OrderId).FirstOrDefault().EntityType + " from " + sourceDepartmentState.Name + " to " + targetDepartmentState.Name + ".",
+                        DateTime.Now,
+                        _unitOfWork.OrderRepository.Find(o => o.OrderId == sourceDepartmentState.OrderId)
+                        .Select(o => o.OrderNumber).FirstOrDefault());
+
+            _actionObject.Source = sourceDepartmentState;
+            _actionObject.Target = targetDepartmentState;
+
+            return _actionObject;
+        }
         public void DetailsGet() { }
         public void FirstPickUp() { }
         public void Delete() { }

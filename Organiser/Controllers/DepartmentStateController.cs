@@ -40,7 +40,7 @@ namespace Organiser.Controllers
             }
 
             MarkAsReadyActionObject _actionObject = _depStateActions.MarkAsReady(model, User.Identity.Name);
-            if (User.IsInRole(_actionObject.DepartmentState.Name))
+            if (!User.IsInRole(_actionObject.DepartmentState.Name))
             {
                 Error("You don't have the necessary permissions to do that.");
             }

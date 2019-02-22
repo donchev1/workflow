@@ -82,7 +82,7 @@ namespace Organiser.Controllers
                 return View("Create", order);
             }
 
-            if (User.IsInRole("Orders"))
+            if (!User.IsInRole("Orders"))
             {
                 return RedirectToAction("Logout", "Account");
             }
@@ -108,7 +108,7 @@ namespace Organiser.Controllers
                 return Error("Order doesn't exist.");
             }
 
-            if (User.IsInRole("Orders"))
+            if (!User.IsInRole("Orders"))
             {
                 return RedirectToAction("Logout", "Account");
             }
@@ -129,7 +129,7 @@ namespace Organiser.Controllers
         public async Task<IActionResult> Edit(Order order)
         {
 
-            if (User.IsInRole("Orders"))
+            if (!User.IsInRole("Orders"))
             {
                 return RedirectToAction("Logout", "Account");
             }
@@ -158,52 +158,26 @@ namespace Organiser.Controllers
         [Authorize]
         public PassEntitiesResultModel PassEntities(EntityOrganiserViewModel model)
         {
-            DepartmentState sourceDepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateById(model.DepartmentStateId);
-            DepartmentState targetDepartmentState = _unitOfWork.DepartmentStateRepository.GetDepartmentStateByOrderIdAndLocNum(sourceDepartmentState.OrderId, sourceDepartmentState.LocationPosition + 1);
+           
+            IEnumerable<string> _userRoles = User.Claims.Select(x => x.Value);
 
-            if (!_unitOfWork.UserRepository.HasRole(HttpContext.User.Identity.Name, GetLocationIntValue(targetDepartmentState.Name)))
+            PassEntitiesActionObject _actionObject = _orderActions.PassEntities(_userRoles, User.Identity.Name, model);
+
+            if (!_actionObject.Success)
             {
-                Error("Something went wrong, logout and log back in to fix the issue.");
+                if (_actionObject.RedirectToError)
+                {
+                    Error(_actionObject.Message);
+                } //no need for else clause here. This method always requires redirects
             }
-
-            if (sourceDepartmentState.EntitiesRFC >= model.EntitiesPassed)
-            {
-                sourceDepartmentState.EntitiesRFC -= model.EntitiesPassed;
-            }
-            else
-            {
-                Error("Entity count insufficient!");
-            }
-
-            if (targetDepartmentState.Status == ((Enums.Statuses)1).ToString())
-            {
-                targetDepartmentState.Status = ((Enums.Statuses)2).ToString();
-                targetDepartmentState.Start = DateTime.Now;
-            }
-
-            targetDepartmentState.EntitiesInProgress += model.EntitiesPassed;
-
-            _unitOfWork.Update(sourceDepartmentState);
-            _unitOfWork.Update(targetDepartmentState);
-
-            _unitOfWork.Complete();
-            _unitOfWork.LogRepository.CreateLog(
-                        HttpContext.User.Identity.Name,
-                        "Moved " + model.EntitiesPassed.ToString() + " " + _unitOfWork.OrderRepository.Find(x => x.OrderId == sourceDepartmentState.OrderId).FirstOrDefault().EntityType + " from " + sourceDepartmentState.Name + " to " + targetDepartmentState.Name + ".",
-                        DateTime.Now,
-                _unitOfWork.OrderRepository.Find(o => o.OrderId == sourceDepartmentState.OrderId)
-                    .Select(o => o.OrderNumber).FirstOrDefault());
-
-
-
 
             PassEntitiesResultModel resultModel = new PassEntitiesResultModel()
             {
-                SourceEntitiesRFC = sourceDepartmentState.EntitiesRFC,
-                TargetEntitiesInProgress = targetDepartmentState.EntitiesInProgress,
-                TargetDepartmentStateId = targetDepartmentState.DepartmentStateId,
-                TargetDepartmentStateStatus = targetDepartmentState.Status,
-                StartTime = targetDepartmentState.Start.ToString("dd/MM/yy (HH:mm)")
+                SourceEntitiesRFC = _actionObject.Source.EntitiesRFC,
+                TargetEntitiesInProgress = _actionObject.Target.EntitiesInProgress,
+                TargetDepartmentStateId = _actionObject.Target.DepartmentStateId,
+                TargetDepartmentStateStatus = _actionObject.Target.Status,
+                StartTime = _actionObject.Target.Start.ToString("dd/MM/yy (HH:mm)")
             };
 
             return resultModel;

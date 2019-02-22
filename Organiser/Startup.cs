@@ -52,6 +52,8 @@ namespace Organiser
 
             services.AddTransient<IAccountActions, AccountActions>();
             services.AddTransient<IOrderActions, OrderActions>();
+            services.AddTransient<ILogActions, LogActions>();
+            services.AddTransient<IDepartmentStateActions, DepartmentStateActions>();
             services.AddTransient<IUnitOfWork, UnitOfWork>();
 
             services.Configure<IISOptions>(options =>
